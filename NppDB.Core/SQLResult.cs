@@ -145,9 +145,9 @@ namespace NppDB.Core
             lblError.Text = message;
         }
 
-        public ParserResult Parse(string sql, CaretPosition caretPosition, bool includeSuggestions)
+        public ParserResult Parse(string sql, CaretPosition caretPosition)
         {
-            return _exec.Parse(sql, caretPosition, includeSuggestions);
+            return _exec.Parse(sql, caretPosition);
         }
 
         public void AddResultTabPage(int index, object dataSource, string titleText, string toolTipText)
