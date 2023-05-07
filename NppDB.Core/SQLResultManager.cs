@@ -1,42 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Windows.Forms;
 using NppDB.Comm;
 
 namespace NppDB.Core
 {
     public class SQLResultManager
     {
-
-        private Dictionary<int, SQLResult> _bind = new Dictionary<int, SQLResult>();
-        public SQLResult CreateSQLResult(int id, IDBConnect connect, ISQLExecutor sqlExecutor)
+        private Dictionary<IntPtr, SQLResult> _bind = new Dictionary<IntPtr, SQLResult>();
+        public SQLResult CreateSQLResult(IntPtr id, IDBConnect connect, ISQLExecutor sqlExecutor)
         {
-            if (_bind.ContainsKey(id)) throw new ApplicationException("id("+ id+") already exists");
+            if (_bind.ContainsKey(id)) 
+                throw new ApplicationException("A database connection is already attached to the current document.");
             var ret = _bind[id] = new SQLResult(connect, sqlExecutor) { Visible = false };//Visible = false to prevent Flicker
             return ret;
         }
-        public int Count
-        {
-            get { return _bind.Count; }
-        }
-        public void Remove(int id)
+
+        public int Count => _bind.Count;
+        
+        public void Remove(IntPtr id)
         {
             _bind.Remove(id);
         }
-        public SQLResult GetSQLResult(int id)
+        public SQLResult GetSQLResult(IntPtr id)
         {
             return _bind.ContainsKey(id) ? _bind[id] : null;
         }
-        public IEnumerable<SQLResult> GetSQLResults(IDBConnect connect)
+        public void RemoveSQLResults(IDBConnect connect)
         {
-            return _bind.Where(x => x.Value.LinkedDBConnect == connect).Select(x => x.Value);
-        }
-
-        public int GetID(SQLResult result)
-        {
-            return _bind.FirstOrDefault(x => x.Value == result).Key;
+            foreach (var result in _bind.Where(x => x.Value.LinkedDBConnect == connect).Select(x => x.Key).ToList())
+            {
+                _bind.Remove(result);
+            }
         }
 
         private static SQLResultManager _inst = null;

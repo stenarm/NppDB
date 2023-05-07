@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>NppDB.Core</RootNamespace>
     <AssemblyName>NppDB.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -20,22 +20,42 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\bin\Debug\NppDB\</OutputPath>
+    <OutputPath>..\bin\x86\Debug\NppDB\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <PlatformTarget>x86</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\bin\Release\NppDB\</OutputPath>
+    <OutputPath>..\bin\x86\Release\NppDB\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\x64\Debug\NppDB\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>..\bin\x64\Release\NppDB\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -154,6 +174,28 @@
   <ItemGroup>
     <None Include="Resources\Folder.png" />
   </ItemGroup>
+
+  <ItemGroup><None Include="Resources\key-primary.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\key-foreign.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\index.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\index-unique.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0000.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0001.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0010.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0011.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0100.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0101.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0110.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-0111.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1000.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1001.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1010.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1011.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1100.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1101.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1110.png" /></ItemGroup>
+  <ItemGroup><None Include="Resources\column-1111.png" /></ItemGroup>
+  
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
