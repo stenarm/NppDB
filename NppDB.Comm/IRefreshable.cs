@@ -1,5 +1,4 @@
-﻿using System;
-namespace NppDB.Comm
+﻿namespace NppDB.Comm
 {
     public interface IRefreshable
     {

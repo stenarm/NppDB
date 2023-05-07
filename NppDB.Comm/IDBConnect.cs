@@ -1,5 +1,4 @@
-﻿using System;
-namespace NppDB.Comm
+﻿namespace NppDB.Comm
 {
     public interface IDBConnect
     {
@@ -8,6 +7,8 @@ namespace NppDB.Comm
         string GetDefaultTitle();
         bool CheckLogin();
         void Connect();
+        void Attach();
+        void ConnectAndAttach();
         void Disconnect();
         string Title { get; set; }
         string Password { get; set; }

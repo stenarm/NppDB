@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace NppDB.Comm
+﻿namespace NppDB.Comm
 {
     public enum NppDBCommandType
     {
         NewFile,
         CreateResultView,
+        DestroyResultView,
         GetActivatedBufferID,
         ExecuteSQL,
         AppendToCurrentView,
-        ActivateBuffer
+        ActivateBuffer,
+        GetAttachedBufferID
     }
-
 }

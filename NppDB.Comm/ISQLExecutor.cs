@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Data;
+using System.Collections.Generic;
+
 namespace NppDB.Comm
 {
     public interface ISQLExecutor
     {
         bool CanExecute();
-        void Execute(string sqlQuery, Action<Exception,DataTable> callback);
+        void Execute(IList<string> sql, Action<IList<CommandResult>> callback);
         bool CanStop();
         void Stop();
+        ParserResult Parse(string sql, CaretPosition caretPosition, bool includeSuggestions);
     }
 }
