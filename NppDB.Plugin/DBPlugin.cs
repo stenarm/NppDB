@@ -447,7 +447,7 @@ namespace NppDB
             var caretPosition = GetCaretPosition();
             if (caretPosition.Offset == textLength) return; // to fix crash, but should be avoided with code change somewhere
 
-            var parserResult = result.Parse(text.Replace("\t", "    "), caretPosition, false);
+            var parserResult = result.Parse(text.Replace("\t", "    "), caretPosition);
             var commands = selectionOnly 
                 ? parserResult.Commands.Select(c => c.Text).ToList()
                 : parserResult.Commands.Skip(parserResult.EnclosingCommandIndex).Take(1).Select(c => c.Text).ToList();
