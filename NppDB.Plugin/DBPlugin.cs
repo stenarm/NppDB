@@ -487,11 +487,12 @@ namespace NppDB
                     var lineWarnings = new Dictionary<int, string>();
                     foreach (var warning in command.Warnings)
                     {
-                        var warningText = string.Format(
+                        var warningText = _warningMessages[warning.Type].Replace("\\n", "\n");
+                        warningText = string.Format(
                             _generalTranslations[ParserMessageType.WARNING_FORMAT],
                             baseLine + warning.StartLine,
                             warning.StartColumn + 1,
-                            _warningMessages[warning.Type]);
+                            warningText);
                         var line = baseLine + warning.StopLine - 1;
                         if (lineWarnings.TryGetValue(line, out var existingWarningText))
                         {
