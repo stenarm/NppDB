@@ -1,6 +1,6 @@
 # NppDB
 This is a repository containing further implementation of NppDB for my master thesis "Creating a Plugin for Source Code Editor Notepad++ that Simplifies SQL
-Programming in MS Access Databases". NppDB is a Notepad++ Plugin for supporting connection to different databases, execute sql statements and show the result.
+Programming in MS Access Databases". NppDB is a Notepad++ plugin originally developed by [Sangkyu Jung](https://github.com/gutkyu/NppDB) for supporting connection to different databases, execute SQL statements and show query results.
 
 ## GUI Features
 ![structure image](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_All_n.png)
@@ -11,7 +11,7 @@ Programming in MS Access Databases". NppDB is a Notepad++ Plugin for supporting 
 2. SQL Result
     * Show SQL execution messages and query results
 3. Editor
-    * Write sql statements
+    * Write SQL statements
 
 ## Currently Supported Databases
 MS Access

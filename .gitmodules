@@ -1,0 +1,3 @@
+[submodule "NppDB.MSAccess"]
+	path = NppDB.MSAccess
+	url = https://github.com/pripost/NppDB.MSAccess.git
