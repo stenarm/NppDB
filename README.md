@@ -18,8 +18,9 @@ MS Access
 
 ## Requirements
    * Notepad++ 64-bit version (tested with 8.4.7 or 8.4.9)
-   * .Net Framework 4.0 
+   * .Net Framework 4.8
    * MS Access Database Engine 2010 Redistributable (driver). The 64-bit driver version can be downloaded here: https://www.microsoft.com/en-us/download/details.aspx?id=13255. If you also have MS Access installed on your computer, in the folder where you downloaded the driver, open the Windows Command Prompt with administrator rights and run the command: "accessdatabaseengine_X64 /quiet".
+   * ANTLR 4.11.1 (for development)
 
 ## Installation
 Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/pripost/NppDB/releases/download/v0.9.0/NppDB.zip) package as follows:
