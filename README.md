@@ -1,17 +1,17 @@
 # NppDB
-   NppDB is a Notepad++ Plugin for supporting that connect to different type databases, execute sql statements and show the result.
+This is a repository containing further implementation of NppDB for my master thesis "Creating a Plugin for Source Code Editor Notepad++ that Simplifies SQL
+Programming in MS Access Databases". NppDB is a Notepad++ Plugin for supporting connection to different databases, execute sql statements and show the result.
 
-## Features
+## GUI Features
 ![structure image](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_All_n.png)
 1. Database Connect Manager
-    * register, remove, connect and close a Database Server
-    * represent the database's elements in hierarchy sturcture.
-    * make a environment for executing a sql statement
+    * Register, unregister, connect and disconnect databases
+    * Represent the database objects in tree structure
+    * Attach and detach to editor window for executing SQL statements
 2. SQL Result
-    * show a result of sql query.
-3. Document
-    * place to writing a sql statement.
-    * a block of sql statement must be selected before 'Execute SQL'
+    * Show SQL execution messages and query results
+3. Editor
+    * Write sql statements
 
 ## Currently Supported Databases
 MS Access
