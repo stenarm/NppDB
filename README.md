@@ -23,7 +23,7 @@ MS Access
    * ANTLR 4.11.1 (for development)
 
 ## Installation
-Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/pripost/NppDB/releases/download/v0.9.0/NppDB.zip) package as follows:
+Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/pripost/NppDB/releases/download/v0.9.1/NppDB.zip) package as follows:
    * Place the file "NppDB.Comm.dll" in the root folder of Notepad++ program folder, where "notepad++.exe" is located.
    * Move the remaining two .dll files to the "./plugins/NppDB" folder.
 
