@@ -195,6 +195,7 @@ namespace NppDB
             SetCommand(5, "About", ShowAbout);
             //SetCommand(3, "Options", ShowOptions);
             _cmdFrmDBExplorerIdx = 2;
+            OpenConsole(); // TODO remove
         }
 
         private void ReadTranslations()
@@ -269,6 +270,8 @@ namespace NppDB
                     "Is not logical operand" },
                 { ParserMessageType.USE_AVG_FUNCTION,
                     "Use 'avg' function instead of dividing sum with count" },
+                { ParserMessageType.TOP_KEYWORD_WITHOUT_ORDER_BY_CLAUSE,
+                    "If you do not include the ORDER BY clause with TOP predicate, the query will return an arbitrary set of records from the table that satisfy the WHERE clause" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {

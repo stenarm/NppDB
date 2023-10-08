@@ -244,7 +244,7 @@ namespace NppDB.Core
                                 var message = $"[{DateTime.Now:dd/MM/yyyy HH:mm:ss}] {result.Error.GetType().Name}: {result.Error.Message}{additionalMessage}\r\n\r\n";
                                 txtMsg.AppendText(message);
                             }
-                            else if (result.RecordsAffected > 0)
+                            else if (result.RecordsAffected > 0 && result.QueryResult.Columns.Count == 0)
                             {
                                 var message = $"[{DateTime.Now:dd/MM/yyyy HH:mm:ss}] {result.RecordsAffected} rows affected by statement:\r\n{result.CommandText}\r\n\r\n";
                                 txtMsg.AppendText(message);

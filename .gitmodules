@@ -1,3 +1,6 @@
 [submodule "NppDB.MSAccess"]
 	path = NppDB.MSAccess
 	url = https://github.com/aneelm/NppDB.MSAccess
+[submodule "NppDB.PostgreSQL"]
+	path = NppDB.PostgreSQL
+	url = https://github.com/aneelm/NppDB.PostgreSQL.git

@@ -22,14 +22,17 @@
                        LibToolDllPath="$(DevEnvDir)"
 					   OutputFileName="C:\Users\Andres\Pictures\Camera Roll\generated\NppDB.dll"
                        SdkPath="$(SDK40ToolsPath)"/>
+		            <!-- TODO fix OutputFileName -->
         <MakeDir Directories="$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\"
                  Condition="Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\') AND !Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x86'"/>
+		<!-- TODO fix SourceFiles -->
         <Copy SourceFiles="C:\Users\Andres\Pictures\Camera Roll\generated\NppDB.dll"
               DestinationFiles="$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\NppDB.dll"
               Condition="Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x86'"
               ContinueOnError="false"/>
         <MakeDir Directories="$(ProgramW6432)\Notepad++\plugins\NppDB\"
                  Condition="Exists('$(ProgramW6432)\Notepad++\plugins\') AND !Exists('$(ProgramW6432)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x64'"/>
+		<!-- TODO fix SourceFiles -->
         <Copy SourceFiles="C:\Users\Andres\Pictures\Camera Roll\generated\NppDB.dll"
               DestinationFiles="$(ProgramW6432)\Notepad++\plugins\NppDB\NppDB.dll"
               Condition="Exists('$(ProgramW6432)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x64'"

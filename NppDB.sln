@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NppDB.Comm", "NppDB.Comm\Np
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NppDB.MSAccess", "NppDB.MSAccess\NppDB.MSAccess.csproj", "{90A00B09-4F04-4F10-AA47-333C633FCD4B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NppDB.PostgreSQL", "NppDB.PostgreSQL\NppDB.PostgreSQL.csproj", "{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -116,8 +118,31 @@ Global
 		{90A00B09-4F04-4F10-AA47-333C633FCD4B}.Release|x64.Build.0 = Release|x64
 		{90A00B09-4F04-4F10-AA47-333C633FCD4B}.Release|x86.ActiveCfg = Release|x86
 		{90A00B09-4F04-4F10-AA47-333C633FCD4B}.Release|x86.Build.0 = Release|x86
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|Win32.Build.0 = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|x64.ActiveCfg = Debug|x64
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|x64.Build.0 = Debug|x64
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Debug|x86.Build.0 = Debug|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Win32.ActiveCfg = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|Win32.Build.0 = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|x64.ActiveCfg = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|x64.Build.0 = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|x86.ActiveCfg = Release|Any CPU
+		{54BF6D02-BEF9-4C4F-B439-EB3BB87566AF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {50693E30-1EAD-4924-9BF7-80B1A9D7EE63}
 	EndGlobalSection
 EndGlobal
