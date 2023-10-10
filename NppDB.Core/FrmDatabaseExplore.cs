@@ -24,27 +24,27 @@ namespace NppDB.Core
             trvDBList.ImageList.Images.Add("Group", NppDB.Core.Properties.Resources.Folder);
             trvDBList.ImageList.Images.Add("Database", NppDB.Core.Properties.Resources.Database);
             trvDBList.ImageList.Images.Add("Table", NppDB.Core.Properties.Resources.Table);
-            
-            //trvDBList.ImageList.Images.Add("Primary_Key", NppDB.Core.Properties.Resources.primaryKey);
-            //trvDBList.ImageList.Images.Add("Foreign_Key", NppDB.Core.Properties.Resources.foreignKey);
-            //trvDBList.ImageList.Images.Add("Index", NppDB.Core.Properties.Resources.index);
-            //trvDBList.ImageList.Images.Add("Unique_Index", NppDB.Core.Properties.Resources.uniqueIndex);
-            //trvDBList.ImageList.Images.Add("Column_0000", NppDB.Core.Properties.Resources.column0000);
-            //trvDBList.ImageList.Images.Add("Column_0001", NppDB.Core.Properties.Resources.column0001);
-            //trvDBList.ImageList.Images.Add("Column_0010", NppDB.Core.Properties.Resources.column0010);
-            //trvDBList.ImageList.Images.Add("Column_0011", NppDB.Core.Properties.Resources.column0011);
-            //trvDBList.ImageList.Images.Add("Column_0100", NppDB.Core.Properties.Resources.column0100);
-            //trvDBList.ImageList.Images.Add("Column_0101", NppDB.Core.Properties.Resources.column0101);
-            //trvDBList.ImageList.Images.Add("Column_0110", NppDB.Core.Properties.Resources.column0110);
-            //trvDBList.ImageList.Images.Add("Column_0111", NppDB.Core.Properties.Resources.column0111);
-            //trvDBList.ImageList.Images.Add("Column_1000", NppDB.Core.Properties.Resources.column1000);
-            //trvDBList.ImageList.Images.Add("Column_1001", NppDB.Core.Properties.Resources.column1001);
-            //trvDBList.ImageList.Images.Add("Column_1010", NppDB.Core.Properties.Resources.column1010);
-            //trvDBList.ImageList.Images.Add("Column_1011", NppDB.Core.Properties.Resources.column1011);
-            //trvDBList.ImageList.Images.Add("Column_1100", NppDB.Core.Properties.Resources.column1100);
-            //trvDBList.ImageList.Images.Add("Column_1101", NppDB.Core.Properties.Resources.column1101);
-            //trvDBList.ImageList.Images.Add("Column_1110", NppDB.Core.Properties.Resources.column1110);
-            //trvDBList.ImageList.Images.Add("Column_1111", NppDB.Core.Properties.Resources.column1111);
+
+            trvDBList.ImageList.Images.Add("Primary_Key", NppDB.Core.Properties.Resources.primaryKey);
+            trvDBList.ImageList.Images.Add("Foreign_Key", NppDB.Core.Properties.Resources.foreignKey);
+            trvDBList.ImageList.Images.Add("Index", NppDB.Core.Properties.Resources.index);
+            trvDBList.ImageList.Images.Add("Unique_Index", NppDB.Core.Properties.Resources.uniqueIndex);
+            trvDBList.ImageList.Images.Add("Column_0000", NppDB.Core.Properties.Resources.column0000);
+            trvDBList.ImageList.Images.Add("Column_0001", NppDB.Core.Properties.Resources.column0001);
+            trvDBList.ImageList.Images.Add("Column_0010", NppDB.Core.Properties.Resources.column0010);
+            trvDBList.ImageList.Images.Add("Column_0011", NppDB.Core.Properties.Resources.column0011);
+            trvDBList.ImageList.Images.Add("Column_0100", NppDB.Core.Properties.Resources.column0100);
+            trvDBList.ImageList.Images.Add("Column_0101", NppDB.Core.Properties.Resources.column0101);
+            trvDBList.ImageList.Images.Add("Column_0110", NppDB.Core.Properties.Resources.column0110);
+            trvDBList.ImageList.Images.Add("Column_0111", NppDB.Core.Properties.Resources.column0111);
+            trvDBList.ImageList.Images.Add("Column_1000", NppDB.Core.Properties.Resources.column1000);
+            trvDBList.ImageList.Images.Add("Column_1001", NppDB.Core.Properties.Resources.column1001);
+            trvDBList.ImageList.Images.Add("Column_1010", NppDB.Core.Properties.Resources.column1010);
+            trvDBList.ImageList.Images.Add("Column_1011", NppDB.Core.Properties.Resources.column1011);
+            trvDBList.ImageList.Images.Add("Column_1100", NppDB.Core.Properties.Resources.column1100);
+            trvDBList.ImageList.Images.Add("Column_1101", NppDB.Core.Properties.Resources.column1101);
+            trvDBList.ImageList.Images.Add("Column_1110", NppDB.Core.Properties.Resources.column1110);
+            trvDBList.ImageList.Images.Add("Column_1111", NppDB.Core.Properties.Resources.column1111);
 
             foreach (var dbcnn in DBServerManager.Instance.Connections)
             {
