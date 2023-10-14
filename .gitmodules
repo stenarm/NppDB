@@ -4,3 +4,6 @@
 [submodule "NppDB.PostgreSQL"]
 	path = NppDB.PostgreSQL
 	url = https://github.com/aneelm/NppDB.PostgreSQL.git
+[submodule "NppDB.PostgreSQL.Tests"]
+	path = NppDB.PostgreSQL.Tests
+	url = https://github.com/aneelm/NppDB.PostgreSQL.Tests.git

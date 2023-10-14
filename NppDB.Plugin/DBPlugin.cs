@@ -532,8 +532,8 @@ namespace NppDB
 
                     editorErrors.Add(errorText);
                     editor.SetIndicatorValue(editorErrors.Count);
-                    var startOffset = editor.FindColumn(error.StartLine - 1, error.StartColumn);
-                    var stopOffset = editor.FindColumn(error.StartLine - 1, error.StartColumn + length);
+                    var startOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn);
+                    var stopOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn + length);
                     editor.IndicatorFillRange(startOffset, stopOffset - startOffset);
                     // var suggestionText = string.Join(" ", parserResult.Suggestions.ToArray());
                     // editor.AutoCShow(length - 1, suggestionText);
