@@ -269,6 +269,8 @@ namespace NppDB
                     "Is not logical operand" },
                 { ParserMessageType.USE_AVG_FUNCTION,
                     "Use 'avg' function instead of dividing sum with count" },
+                { ParserMessageType.TOP_KEYWORD_WITHOUT_ORDER_BY_CLAUSE,
+                    "If you do not include the ORDER BY clause with TOP predicate, the query will return an arbitrary set of records from the table that satisfy the WHERE clause" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
@@ -529,8 +531,8 @@ namespace NppDB
 
                     editorErrors.Add(errorText);
                     editor.SetIndicatorValue(editorErrors.Count);
-                    var startOffset = editor.FindColumn(error.StartLine - 1, error.StartColumn);
-                    var stopOffset = editor.FindColumn(error.StartLine - 1, error.StartColumn + length);
+                    var startOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn);
+                    var stopOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn + length);
                     editor.IndicatorFillRange(startOffset, stopOffset - startOffset);
                     // var suggestionText = string.Join(" ", parserResult.Suggestions.ToArray());
                     // editor.AutoCShow(length - 1, suggestionText);

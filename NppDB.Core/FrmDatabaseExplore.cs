@@ -24,7 +24,7 @@ namespace NppDB.Core
             trvDBList.ImageList.Images.Add("Group", NppDB.Core.Properties.Resources.Folder);
             trvDBList.ImageList.Images.Add("Database", NppDB.Core.Properties.Resources.Database);
             trvDBList.ImageList.Images.Add("Table", NppDB.Core.Properties.Resources.Table);
-            
+
             trvDBList.ImageList.Images.Add("Primary_Key", NppDB.Core.Properties.Resources.primaryKey);
             trvDBList.ImageList.Images.Add("Foreign_Key", NppDB.Core.Properties.Resources.foreignKey);
             trvDBList.ImageList.Images.Add("Index", NppDB.Core.Properties.Resources.index);
