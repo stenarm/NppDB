@@ -195,7 +195,6 @@ namespace NppDB
             SetCommand(5, "About", ShowAbout);
             //SetCommand(3, "Options", ShowOptions);
             _cmdFrmDBExplorerIdx = 2;
-            OpenConsole(); // TODO remove
         }
 
         private void ReadTranslations()
