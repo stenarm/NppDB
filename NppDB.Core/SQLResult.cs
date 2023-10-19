@@ -242,7 +242,9 @@ namespace NppDB.Core
                             {
                                 var additionalMessage = result.CommandText == null ? "" : $"\r\nThis error occurred while executing statement:\r\n{result.CommandText}";
                                 var message = $"[{DateTime.Now:dd/MM/yyyy HH:mm:ss}] {result.Error.GetType().Name}: {result.Error.Message}{additionalMessage}\r\n\r\n";
+                                txtMsg.SelectionFont = new Font("Microsoft Sans Serif", 8F, FontStyle.Bold, GraphicsUnit.Point, ((byte)(129)));
                                 txtMsg.AppendText(message);
+                                txtMsg.SelectionFont = new Font("Microsoft Sans Serif", 9F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(129)));
                             }
                             else if (result.RecordsAffected > 0 && result.QueryResult.Columns.Count == 0)
                             {
