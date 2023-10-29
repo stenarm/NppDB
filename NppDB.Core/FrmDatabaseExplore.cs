@@ -103,20 +103,13 @@ namespace NppDB.Core
             if (!dbcnn.CheckLogin()) return;
 
             var tmpName = dbcnn.GetDefaultTitle();
-            var maxVal = -1;
+            var maxVal = 0;
 
             var regrex = new System.Text.RegularExpressions.Regex("^" + System.Text.RegularExpressions.Regex.Escape(dbcnn.ServerAddress) + "[ ]*\\([ ]*([0-9]+)[ ]*\\)$");
-            try
-            {
-                maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Max(x =>
-                {
-                    var groups = regrex.Match(dbcnn.Title).Groups;
-                    return groups.Count > 0 ? int.Parse(groups[0].Value) : -1;
-                });
-            }
-            catch (InvalidOperationException) { }
 
-            dbcnn.Title = tmpName + (maxVal == -1 ? "" : "(" + maxVal + 1 + ")");
+            maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Count();
+
+            dbcnn.Title = tmpName + (maxVal == 0 ? "" : "(" + maxVal + ")");
 
             dbcnn.Connect();
             DBServerManager.Instance.Register(dbcnn);
