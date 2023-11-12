@@ -103,11 +103,7 @@ namespace NppDB.Core
             if (!dbcnn.CheckLogin()) return;
 
             var tmpName = dbcnn.GetDefaultTitle();
-            var maxVal = 0;
-
-            var regrex = new System.Text.RegularExpressions.Regex("^" + System.Text.RegularExpressions.Regex.Escape(dbcnn.ServerAddress) + "[ ]*\\([ ]*([0-9]+)[ ]*\\)$");
-
-            maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Count();
+            var maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Count();
 
             dbcnn.Title = tmpName + (maxVal == 0 ? "" : "(" + maxVal + ")");
 
