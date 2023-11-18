@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
 using NppDB.Comm;
@@ -150,7 +151,7 @@ namespace NppDB.Core
             return _exec.Parse(sql, caretPosition);
         }
 
-        public void AddResultTabPage(int index, object dataSource, string titleText, string toolTipText)
+        public void AddResultTabPage(int index, DataTable dataSource, string titleText, string toolTipText)
         {
             var tp = new TabPage();
             var dgv = new DataGridView();
@@ -182,6 +183,10 @@ namespace NppDB.Core
             dgv.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 
             dgv.DataSource = dataSource;
+            foreach (DataGridViewColumn col in dgv.Columns)
+            {
+                col.HeaderText = dataSource.Columns[col.HeaderText].Caption;
+            }
             dgv.DefaultCellStyle = dataGridViewCellStyle2;
             dgv.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
             dgv.Dock = System.Windows.Forms.DockStyle.Fill;
