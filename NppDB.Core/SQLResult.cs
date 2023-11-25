@@ -198,7 +198,7 @@ namespace NppDB.Core
 
             dgv.RowHeadersDefaultCellStyle = dataGridViewCellStyle3;
             dgv.RowHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            dgv.RowHeadersWidth = 10;
+            dgv.RowHeadersWidth = 43;
             dgv.RowTemplate.Height = 23;
             dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
             dgv.ShowEditingIcon = false;
@@ -207,12 +207,12 @@ namespace NppDB.Core
             dgv.TabIndex = 0;
             dgv.VirtualMode = true;
 
-            dgv.Sorted += (s, e) => { Numbering(dgv); };
+            dgv.Sorted += (s, e) => { Numbering(dgv); dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders); };
+            dgv.DataBindingComplete += (s, e) => { Numbering(dgv); dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders); };
 
             ((ISupportInitialize)dgv).EndInit();
             tp.ResumeLayout(false);
-
-            Numbering(dgv);
+            
             AdjustResizeColumnRow(dgv);
         }
 
