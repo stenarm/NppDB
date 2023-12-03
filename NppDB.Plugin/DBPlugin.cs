@@ -295,6 +295,12 @@ namespace NppDB
                     "Missing alias in FROM subquery" },
                 { ParserMessageType.MISSING_EXPRESSION_IN_HAVING_CLAUSE,
                     "Missing expression in HAVING clause" },
+                { ParserMessageType.SUBQUERY_COLUMN_COUNT_MISMATCH,
+                    "Column count mismatch between clause and subquery" },
+                { ParserMessageType.COMPARING_WITH_NULL,
+                    "Cannot compare values to NULL" },
+                { ParserMessageType.NOT_EQUALITY_WITH_NULL,
+                    "Use IS NOT instead of <>" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
