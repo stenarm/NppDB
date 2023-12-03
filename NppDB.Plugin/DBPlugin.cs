@@ -293,6 +293,8 @@ namespace NppDB
                     "Query will return one row in result, TOP is unnecessary" },
                 { ParserMessageType.MISSING_ALIAS_IN_FROM_SUBQUERY,
                     "Missing alias in FROM subquery" },
+                { ParserMessageType.MISSING_EXPRESSION_IN_HAVING_CLAUSE,
+                    "Missing expression in HAVING clause" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
