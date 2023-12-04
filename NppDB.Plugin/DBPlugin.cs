@@ -203,10 +203,18 @@ namespace NppDB
             // Therefore read from Notepad++ 'nativeLang.xml' config
             // (although this is a silly way since we keep re-reading it for any changes on SCN_UPDATE_UI notification):
             // <NotepadPlus><Native-Langue name="English" filename="english.xml" version="8.4.6">
-            var xd = new XmlDocument();
-            xd.Load(_languageConfigPath);
-            var selectedLocalizationFile = xd.SelectSingleNode("/NotepadPlus/Native-Langue/@filename").Value;
-            var translationsConfigPath = Path.Combine(_nppDbPluginDir, selectedLocalizationFile.RemoveSuffix(".xml") + ".ini");
+            var translationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini");
+            try
+            {
+                var xd = new XmlDocument();
+                xd.Load(_languageConfigPath);
+                var selectedLocalizationFile = xd.SelectSingleNode("/NotepadPlus/Native-Langue/@filename").Value;
+                translationsConfigPath = Path.Combine(_nppDbPluginDir, selectedLocalizationFile.RemoveSuffix(".xml") + ".ini");
+            }
+            catch (Exception)
+            {
+                translationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini");
+            }
             if (!string.IsNullOrEmpty(_translationsConfigPath) &&
                 _translationsConfigPath.Equals(translationsConfigPath))
                 return;
