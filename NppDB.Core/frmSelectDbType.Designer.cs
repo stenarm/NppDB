@@ -80,7 +80,7 @@
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Select a Database Type";
+            this.Text = "Select the Database Management System";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.frmSelectDbType_FormClosed);
             this.Load += new System.EventHandler(this.frmSelectDbType_Load);
             this.ResumeLayout(false);
