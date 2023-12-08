@@ -258,7 +258,12 @@ namespace NppDB.Core
                             }
                             else if (result.QueryResult.Columns.Count == 0)
                             {
-                                var message = $"[{DateTime.Now:dd/MM/yyyy HH:mm:ss}] Statement executed successfully:\r\n{result.CommandText}\r\n\r\n";
+                                var message = $"[{DateTime.Now:dd/MM/yyyy HH:mm:ss}] Statement executed successfully:\r\n{result.CommandText}";
+                                if (result.CommandMessage != null) 
+                                {
+                                    message += $"\r\nStatement resulted in action: \r\n{result.CommandMessage}";
+                                }
+                                message += "\r\n\r\n";
                                 txtMsg.AppendText(message);
                             }
                             else

@@ -48,6 +48,7 @@ namespace NppDB.Comm
         public string CommandText { get; set; }
         public int RecordsAffected { get; set; }
         public DataTable QueryResult { get; set; }
+        public string CommandMessage { get; set; }
         public Exception Error { get; set; }
     }
 
