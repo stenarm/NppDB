@@ -196,6 +196,7 @@ namespace NppDB.Core
         {
             if (e.Button == MouseButtons.Right)
             {
+                trvDBList.SelectedNode = e.Node;
                 e.Node.ContextMenuStrip = CreateMenu(e.Node);
             }
         }
@@ -222,8 +223,8 @@ namespace NppDB.Core
 
         private ContextMenuStrip CreateMenu(TreeNode node)
         {
+            Console.WriteLine("createmenu: " + node.Text);
             if (!(node is IMenuProvider menuCreator)) return null;
-
             var menu = menuCreator.GetMenu();
             if (!(node is IDBConnect connection)) return menu;
             
