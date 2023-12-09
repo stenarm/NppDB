@@ -138,7 +138,8 @@ namespace NppDB.Core
             if (!(trvDBList.SelectedNode is IDBConnect connector)) return;
             try
             {
-                connector.ConnectAndAttach();
+                string result = connector.ConnectAndAttach();
+                if (result != "CONTINUE") { return; }
                 trvDBList.SelectedNode.Expand();
             }
             catch (Exception ex)
@@ -212,7 +213,8 @@ namespace NppDB.Core
             var dbconn = GetRootParent(e.Node) as IDBConnect;
             if ( e.Node.Nodes.Count == 0)
             {
-                dbconn.ConnectAndAttach();
+                string result = dbconn.ConnectAndAttach();
+                if (result != "CONTINUE") { return;  }
                 r.Refresh();
             }
             e.Node.Expand();

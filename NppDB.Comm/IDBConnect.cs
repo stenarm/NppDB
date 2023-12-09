@@ -8,7 +8,7 @@
         bool CheckLogin();
         void Connect();
         void Attach();
-        void ConnectAndAttach();
+        string ConnectAndAttach();
         void Disconnect();
         string Title { get; set; }
         string Password { get; set; }
