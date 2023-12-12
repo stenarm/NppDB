@@ -256,7 +256,9 @@ namespace NppDB
                 { ParserMessageType.DUPLICATE_SELECTED_COLUMN_IN_SELECT_CLAUSE,
                     "Same column exists in result set more than once" },
                 { ParserMessageType.AND_OR_MISSING_PARENTHESES_IN_WHERE_CLAUSE,
-                    "WHERE/HAVING clause has AND and OR expressions without parentheses" },
+                    "WHERE clause has AND and OR expressions without parentheses" },
+                { ParserMessageType.AND_OR_MISSING_PARENTHESES_IN_HAVING_CLAUSE,
+                    "HAVING clause has AND and OR expressions without parentheses" },
                 { ParserMessageType.AGGREGATE_FUNCTION_IN_WHERE_CLAUSE,
                     "WHERE clause has aggregate function" },
                 { ParserMessageType.MISSING_COLUMN_ALIAS_IN_SELECT_CLAUSE,
@@ -277,6 +279,8 @@ namespace NppDB
                     "Is not logical operand" },
                 { ParserMessageType.USE_AVG_FUNCTION,
                     "Use 'avg' function instead of dividing sum with count" },
+
+
                 { ParserMessageType.TOP_KEYWORD_WITHOUT_ORDER_BY_CLAUSE,
                     "If you do not include the ORDER BY clause with TOP predicate, the query will return an arbitrary set of records from the table that satisfy the WHERE clause" },
                 { ParserMessageType.MISSING_COLUMN_IN_GROUP_BY_CLAUSE,
