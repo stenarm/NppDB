@@ -1,6 +1,7 @@
 # NppDB
-This is a repository containing further implementation of NppDB for my master thesis "Creating a Plugin for Source Code Editor Notepad++ that Simplifies SQL
-Programming in MS Access Databases". NppDB is a Notepad++ plugin originally developed by [Sangkyu Jung](https://github.com/gutkyu/NppDB) for supporting connection to different databases, execute SQL statements and show query results.
+This is a repository containing further implementation of NppDB for my bachelors thesis "Further Development of a Plugin that Simplifies SQL Programming in MS Access and PostgreSQL for Source Code Editor Notepad++". 
+NppDB is a Notepad++ plugin originally developed by [Sangkyu Jung](https://github.com/gutkyu/NppDB) for supporting connection to different databases, execute SQL statements and show query results, 
+and further developed by [Priit Post](https://github.com/pripost/NppDB).
 
 ## GUI Features
 ![structure image](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_All_n.png)
@@ -15,53 +16,57 @@ Programming in MS Access Databases". NppDB is a Notepad++ plugin originally deve
 
 ## Currently Supported Databases
 MS Access
+PostgreSQL
 
 ## Requirements
    * Notepad++ 64-bit version (tested with 8.4.7 or 8.4.9)
    * .Net Framework 4.8
-   * MS Access Database Engine 2010 Redistributable (driver). The 64-bit driver version can be downloaded here: https://www.microsoft.com/en-us/download/details.aspx?id=13255. If you also have MS Access installed on your computer, in the folder where you downloaded the driver, open the Windows Command Prompt with administrator rights and run the command: "accessdatabaseengine_X64 /quiet".
-   * ANTLR 4.11.1 (for development)
+   * MS Access Database Engine 2010 Redistributable (driver). The 64-bit driver version can be downloaded here: https://www.microsoft.com/en-us/download/details.aspx?id=13255. If you also have MS Access installed on your computer, in the folder where you downloaded the driver, open the Windows Command Prompt with administrator rights and run the command: "accessdatabaseengine_X64 /quiet". (to use MS Access database)
+   * ANTLR 4.11.1 or 4.13.1 (for development)
 
 ## Installation
-Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/pripost/NppDB/releases/download/v0.9.1/NppDB.zip) package as follows:
+Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/aneelm/NppDB/releases/download/v1.0.19/v1.0.19.zip) package as follows:
    * Place the file "NppDB.Comm.dll" in the root folder of Notepad++ program folder, where "notepad++.exe" is located.
-   * Move the remaining two .dll files to the "./plugins/NppDB" folder.
+   * Move the remaining .dll and translation.ini files to the "./plugins/NppDB" folder.
 
 ## Quick Start Guide
    1. Open "Database connect manager" (F10).
-   2. Register new or existing database (.accdb, .mdb) from local filesystem in the manager window.
-   3. Right mouse click and select "Connect" or double click on the database name where to connect the active editor to. If there is a password window, enter the password, or if there is none, just "OK".
+   2. Register MS Access or PostgreSQL database
+         1. For MS Access register new or existing database (.accdb, .mdb) from local filesystem in the manager window, if there is no password, in the password window just click OK.
+         2. For PostgreSQL register a new connection and fill out all the connection details.
    4. Expand the database tree to view database objects as you wish.
    5. Write some SQL statements in the editor.
    6. Execute written SQL statement(s) (F9). You can execute either the selected statement(s) or the statement on which the text cursor is located.
 
 ## Usage
 ### Open Database Connect Manager
-   select 'NppDB/Database Connect Manager' from Notepad++ plugin menu
+   Select 'NppDB/Database Connect Manager' from Notepad++ plugin menu
    or
-   click icon ![Database Connect Manager Icon](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/DBPPManage16.png) from a toolbar 
+   Click icon ![Database Connect Manager Icon](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/DBPPManage16.png) from a toolbar 
 
 ### Register new database server
-   1. click icon ![Regiser Icon](https://raw.githubusercontent.com/gutkyu/NppDB/master/NppDB.Core/Resources/add16.png) from  Database-Connect-Manager's toolbar
-   2. select one of database types
+   1. Click icon ![Regiser Icon](https://raw.githubusercontent.com/gutkyu/NppDB/master/NppDB.Core/Resources/add16.png) from  Database-Connect-Manager's toolbar
+   2. Select one of database types
    3. Database Connect Node is registered in Database Connect Manager by pass authentication which selected database module produce.
-	![Select Database Type](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_Sel_DBType.png)
-   4. connect to database server
-   	* [MS SQL Server](https://github.com/gutkyu/NppDB.MSSQL) 
+
+	![Select Database Type](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/database_system.png)
+   4. Connect to database server
+   	* [MS Access](https://github.com/aneelm/NppDB.MSAccess) 
+   	* [PostgreSQL](https://github.com/aneelm/NppDB.PostgreSQL) 
       
 ### Getting into detail about sub elements
-   perform double-click on the node to expands sub elements.
-   because all of connect database manager's nodes are represented in hierarchy, can also use this way for other sub elements
-   two method to make a environment to execute sql statements
-   * first, select 'Open' from database node's popup
-   * second, select prepared sql statements as 'Select … Top 100' or 'Select … Limit 100' from table node's popup
-	![SQL Linked Database Node](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_Node_SQL.png)
+   Double-click on the nodes to expands sub elements in the database connection manager. If no connection has been made to the database, a connection window will open asking you to connect.
+
+   * First, select 'Open' from database node's popup
+   * Second, select prepared sql statements such as 'SELECT … Top 100' or 'SELECT *' or 'DROP' from table node's popup
+
+	![SQL Linked Database Node](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/database_management.png)
 
 ### Executing sql statement
-   1. check that current document can execute sql statement. (ok if with sql-result )
-   2. write a sql statement and then select a block of the statement.
+   1. Check that current document can execute sql statement. (ok if with sql-result )
+   2. Write a sql statement and then select a block of the statement.
 	![Select Blocks](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_SQL_Block.png)
-   3. perform menu 'Execute SQL (F9 shortcut key)' to display result of the sql statement.
+   3. In NppDB plugin menu click 'Execute SQL (F9 shortcut key)' or use the F9 shortcut key to run the sql statement and display the results.
 	
 ## License
 MIT
