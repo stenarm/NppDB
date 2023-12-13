@@ -15,8 +15,8 @@ and further developed by [Priit Post](https://github.com/pripost/NppDB).
     * Write SQL statements
 
 ## Currently Supported Databases
-MS Access
-PostgreSQL
+* MS Access
+* PostgreSQL
 
 ## Requirements
    * Notepad++ 64-bit version (tested with 8.4.7 or 8.4.9)
@@ -50,8 +50,8 @@ Copy compiled .dll files from project folder or downloaded [.zip package](https:
    3. Database Connect Node is registered in Database Connect Manager by pass authentication which selected database module produce.
 	![Select Database Type](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/database_system.png)
    4. Connect to database server
-   	* [MS Access](https://github.com/aneelm/NppDB.MSAccess) 
-   	* [PostgreSQL](https://github.com/aneelm/NppDB.PostgreSQL) 
+         * [MS Access](https://github.com/aneelm/NppDB.MSAccess) 
+   	   * [PostgreSQL](https://github.com/aneelm/NppDB.PostgreSQL) 
       
 ### Getting into detail about sub elements
    Double-click on the nodes to expands sub elements in the database connection manager. If no connection has been made to the database, a connection window will open asking you to connect.
