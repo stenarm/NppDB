@@ -48,7 +48,6 @@ Copy compiled .dll files from project folder or downloaded [.zip package](https:
    1. Click icon ![Regiser Icon](https://raw.githubusercontent.com/gutkyu/NppDB/master/NppDB.Core/Resources/add16.png) from  Database-Connect-Manager's toolbar
    2. Select one of database types
    3. Database Connect Node is registered in Database Connect Manager by pass authentication which selected database module produce.
-
 	![Select Database Type](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/database_system.png)
    4. Connect to database server
    	* [MS Access](https://github.com/aneelm/NppDB.MSAccess) 
@@ -59,7 +58,6 @@ Copy compiled .dll files from project folder or downloaded [.zip package](https:
 
    * First, select 'Open' from database node's popup
    * Second, select prepared sql statements such as 'SELECT … Top 100' or 'SELECT *' or 'DROP' from table node's popup
-
 	![SQL Linked Database Node](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/database_management.png)
 
 ### Executing sql statement
