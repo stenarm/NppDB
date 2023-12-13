@@ -1,5 +1,9 @@
 Resource/
 test/
+.vs/
+packages/
+releases/
+.idea/
 **/bin/
 **/obj/
 **/Release/
