@@ -14,7 +14,7 @@ and further developed by [Priit Post](https://github.com/pripost/NppDB).
 3. Editor
     * Write SQL statements
 
-## Currently Supported Databases
+## Currently Supported Database Management Systems
 * MS Access
 * PostgreSQL
 
