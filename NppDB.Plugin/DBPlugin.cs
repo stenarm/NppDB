@@ -313,6 +313,8 @@ namespace NppDB
                     "Cannot compare values to NULL" },
                 { ParserMessageType.NOT_EQUALITY_WITH_NULL,
                     "Use IS NOT instead of <>" },
+                { ParserMessageType.MULTIPLE_HAVING_USED,
+                    "HAVING used multiple times" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
