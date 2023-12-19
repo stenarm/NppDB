@@ -315,6 +315,12 @@ namespace NppDB
                     "Use IS NOT instead of <>" },
                 { ParserMessageType.MULTIPLE_HAVING_USED,
                     "HAVING used multiple times" },
+                { ParserMessageType.FETCH_CLAUSE_MIGHT_RETURN_MULTIPLE_ROWS,
+                    "FETCH clause with WITH TIES might return multiple rows" },
+                { ParserMessageType.LIMIT_CONSTRAINT,
+                    "FETCH/LIMIT/OFFSET clause value must be larger than 0" },
+                { ParserMessageType.ONE_ROW_IN_RESULT_WITH_LIMIT,
+                    "Query will return one row in result, FETCH/LIMIT is unnecessary" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
