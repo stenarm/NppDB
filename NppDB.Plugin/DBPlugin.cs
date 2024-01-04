@@ -321,6 +321,8 @@ namespace NppDB
                     "FETCH/LIMIT/OFFSET clause value can not be smaller than 0" },
                 { ParserMessageType.ONE_ROW_IN_RESULT_WITH_LIMIT,
                     "Query will return one row in result, FETCH/LIMIT is unnecessary" },
+                { ParserMessageType.FETCH_LIMIT_OFFSET_CLAUSE_WITHOUT_ORDER_BY_CLAUSE,
+                    "If you do not include the ORDER BY clause with FETCH/LIMIT/OFFSET clause, the query will return an arbitrary set of records from the table that satisfy the WHERE clause" },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
