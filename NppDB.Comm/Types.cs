@@ -33,6 +33,7 @@ namespace NppDB.Comm
     public class ParsedCommand : ParserMessage
     {
         public IList<ParserWarning> Warnings { get; set; } = new List<ParserWarning>();
+        public IList<ParserWarning> AnalyzeErrors { get; set; } = new List<ParserWarning>();
     }
 
     public class ParserResult

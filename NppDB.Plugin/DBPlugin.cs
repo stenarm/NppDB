@@ -323,6 +323,8 @@ namespace NppDB
                     "Query will return one row in result, FETCH/LIMIT is unnecessary" },
                 { ParserMessageType.FETCH_LIMIT_OFFSET_CLAUSE_WITHOUT_ORDER_BY_CLAUSE,
                     "If you do not include the ORDER BY clause with FETCH/LIMIT/OFFSET clause, the query will return an arbitrary set of records from the table that satisfy the WHERE clause" },
+                { ParserMessageType.PARSING_ERROR,
+                    "Unable to analyze further SQL commands from around this statement." },
             };
             var dict1 = new Dictionary<ParserMessageType, string>
             {
@@ -534,8 +536,12 @@ namespace NppDB
                 editor.StyleSetFont(199, "Calibri");
                 editor.StyleSetBack(199, new Colour(250, 250, 225));
                 editor.StyleSetFore(199, new Colour(130, 110, 30));
+                editor.StyleSetFont(200, "Calibri");
+                editor.StyleSetBack(200, new Colour(245, 113, 113));
+                editor.StyleSetFore(200, new Colour(32, 32, 32));
 
                 editor.AnnotationClearAll();
+                var lineAnalyzeErrors = new Dictionary<int, string>();
                 foreach (var command in parserResult.Commands)
                 {
                     var lineWarnings = new Dictionary<int, string>();
@@ -552,15 +558,43 @@ namespace NppDB
                         {
                             warningText = $"{existingWarningText}\r\n{warningText}";
                         }
+                        else if (lineAnalyzeErrors.TryGetValue(line, out var existingErrorText)) 
+                        {
+                            warningText = $"{warningText}\r\n{existingErrorText}";
+                            lineAnalyzeErrors[line] = warningText;
+                            continue;
+                        }
 
                         lineWarnings[line] = warningText;
                     }
+                    foreach (var warning in command.AnalyzeErrors)
+                    {
+                        var warningText = _warningMessages[warning.Type].Replace("\\n", "\n");
+                        warningText = string.Format(
+                            _generalTranslations[ParserMessageType.WARNING_FORMAT],
+                            baseLine + warning.StartLine,
+                            warning.StartColumn + 1,
+                            warningText);
+                        var line = baseLine + warning.StopLine - 1;
+                        if (lineWarnings.TryGetValue(line, out var existingWarningText))
+                        {
+                            warningText = $"{existingWarningText}\r\n{warningText}";
+                            lineWarnings.Remove(line);
+                        }
 
+                        lineAnalyzeErrors[line] = warningText;
+                    }
                     foreach (var entry in lineWarnings)
                     {
                         editor.AnnotationSetStyle(entry.Key, 199);
                         editor.AnnotationSetText(entry.Key, entry.Value);
                     }
+                }
+
+                foreach (var entry in lineAnalyzeErrors)
+                {
+                    editor.AnnotationSetStyle(entry.Key, 200);
+                    editor.AnnotationSetText(entry.Key, entry.Value);
                 }
 
                 editor.AnnotationSetVisible(AnnotationVisible.BOXED);
