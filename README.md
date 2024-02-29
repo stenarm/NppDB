@@ -28,6 +28,9 @@ and further developed by [Priit Post](https://github.com/pripost/NppDB).
 Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/aneelm/NppDB/releases/download/v1.0.19/v1.0.19.zip) package as follows:
    * Place the file "NppDB.Comm.dll" in the root folder of Notepad++ program folder, where "notepad++.exe" is located.
    * Move the remaining .dll and translation.ini files to the "./plugins/NppDB" folder.
+   * If you have get an error when starting up Notepad++ after installing the plugin, make sure all the copied .dll files are unblocked, by right-clicking on them and opening properties, and if possible checking box 'unblock'.
+ 
+![Unblock](https://raw.githubusercontent.com/aneelm/NppDB/master/README_images/SecurityUnblock.jpg)
 
 ## Quick Start Guide
    1. Open "Database connect manager" (F10).
