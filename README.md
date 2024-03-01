@@ -21,7 +21,7 @@ and further developed by [Priit Post](https://github.com/pripost/NppDB).
 ## Requirements
    * Notepad++ 64-bit version (tested with 8.4.7 or 8.4.9)
    * .Net Framework 4.8
-   * MS Access Database Engine 2010 Redistributable (driver). The 64-bit driver version can be downloaded here: https://download.cnet.com/microsoft-access-database-engine-2010-redistributable-64-bit/3000-10254_4-75452796.html. If you also have MS Access installed on your computer, in the folder where you downloaded the driver, open the Windows Command Prompt with administrator rights and run the command: "accessdatabaseengine_X64 /quiet". (to use MS Access database)
+   * MS Access Database Engine 2010 Redistributable (driver) or MS Access Database Engine 2016 Redistributable (driver). The 64-bit driver version can be downloaded here: https://download.cnet.com/microsoft-access-database-engine-2010-redistributable-64-bit/3000-10254_4-75452796.html or here https://www.microsoft.com/en-us/download/details.aspx?id=54920&irgwc=1. If you also have MS Access installed on your computer, in the folder where you downloaded the driver, open the Windows Command Prompt with administrator rights and run the command: "accessdatabaseengine_X64 /quiet". (to use MS Access database)
    * ANTLR 4.11.1 or 4.13.1 (for development)
 
 ## Installation
