@@ -24,14 +24,9 @@
         <MakeDir Directories="$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\"
                  Condition="Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\') AND !Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x86'"/>
         <Copy SourceFiles="$(TargetPath)"
-              DestinationFiles="$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\NppDB.dll"
-              Condition="Exists('$(MSBuildProgramFiles32)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x86'"
+              DestinationFiles="C:\Program Files\Notepad++\plugins\NppDB\NppDB.dll"
               ContinueOnError="false"/>
         <MakeDir Directories="$(ProgramW6432)\Notepad++\plugins\NppDB\"
                  Condition="Exists('$(ProgramW6432)\Notepad++\plugins\') AND !Exists('$(ProgramW6432)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x64'"/>
-        <Copy SourceFiles="$(TargetPath)"
-              DestinationFiles="$(ProgramW6432)\Notepad++\plugins\NppDB\NppDB.dll"
-              Condition="Exists('$(ProgramW6432)\Notepad++\plugins\NppDB\') AND '$(Platform)'=='x64'"
-              ContinueOnError="false"/>
     </Target>
 </Project>

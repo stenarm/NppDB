@@ -469,7 +469,7 @@ namespace NppDB
             var result = SQLResultManager.Instance.GetSQLResult(bufID);
             if (result == null)
             {
-                MessageBox.Show("No database connection is attached to the current document.\nPlease select \"Attach\" from database context menu.");
+                MessageBox.Show("No database connection is attached to the current document.\nPlease select \"Attach\" from database context menu. TEST TEST TEST");
                 return;
             }
             
