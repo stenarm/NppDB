@@ -7,9 +7,10 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Linq;
-using System.Reflection;
+using System.Reflection; // <-- Added for Assembly loading
 using System.Xml;
 using Microsoft.Win32.SafeHandles;
+using System.Diagnostics;
 
 using NppDB.Comm;
 using NppDB.Core;
@@ -24,7 +25,7 @@ namespace NppDB
             return value.EndsWith(suffix) ? value.Substring(0, value.Length - suffix.Length) : value;
         }
     }
-    
+
     public class NppDBPlugin : PluginBase, INppDBCommandHost
     {
         private const string PluginName = "NppDB";
@@ -42,6 +43,75 @@ namespace NppDB
         private IList<string> editorErrors = new List<string>();
         private Dictionary<ParserMessageType, string> _warningMessages = new Dictionary<ParserMessageType, string>();
         private Dictionary<ParserMessageType, string> _generalTranslations = new Dictionary<ParserMessageType, string>();
+
+        // --- V ADDED CODE START V ---
+
+        /// <summary>
+        /// Static constructor to hook up the AssemblyResolve event handler as early as possible.
+        /// </summary>
+        static NppDBPlugin()
+        {
+            AppDomain.CurrentDomain.AssemblyResolve += FindAssembly;
+        }
+
+        /// <summary>
+        /// Handles AssemblyResolve event to help the .NET runtime find DLLs
+        /// located in the plugin's directory or other expected locations.
+        /// </summary>
+        private static Assembly FindAssembly(object sender, ResolveEventArgs args)
+{
+    string logFilePath = Path.Combine(Path.GetTempPath(), "NppDB_ResolveTrace.log"); // Log file path
+
+    try
+    {
+        // --- Log that the handler was called ---
+        File.AppendAllText(logFilePath, $"{DateTime.Now}: Trying to resolve '{args.Name}' requested by '{args.RequestingAssembly?.FullName ?? "Unknown"}'.\r\n");
+
+        var requestedAssemblyName = new AssemblyName(args.Name);
+        string pluginDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string assemblyPath = Path.Combine(pluginDirectory, requestedAssemblyName.Name + ".dll");
+
+        File.AppendAllText(logFilePath, $"{DateTime.Now}: Looking for '{assemblyPath}'.\r\n");
+
+        if (File.Exists(assemblyPath))
+        {
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: Found at '{assemblyPath}'. Loading...\r\n");
+            Assembly loadedAssembly = Assembly.LoadFrom(assemblyPath);
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
+            return loadedAssembly;
+        }
+        // Special check for NppDB.Comm in base directory
+        else if (requestedAssemblyName.Name.Equals("NppDB.Comm", StringComparison.OrdinalIgnoreCase))
+        {
+             File.AppendAllText(logFilePath, $"{DateTime.Now}: '{requestedAssemblyName.Name}.dll' not found in plugin dir. Checking N++ base dir...\r\n");
+             string nppBaseDirectory = Path.GetFullPath(Path.Combine(pluginDirectory, "..", ".."));
+             string commPathInBase = Path.Combine(nppBaseDirectory, "NppDB.Comm.dll");
+             if (File.Exists(commPathInBase))
+             {
+                 File.AppendAllText(logFilePath, $"{DateTime.Now}: Found NppDB.Comm.dll at '{commPathInBase}'. Loading...\r\n");
+                 Assembly loadedAssembly = Assembly.LoadFrom(commPathInBase);
+                 File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
+                 return loadedAssembly;
+             } else {
+                  File.AppendAllText(logFilePath, $"{DateTime.Now}: NppDB.Comm.dll NOT found at '{commPathInBase}'.\r\n");
+             }
+        } else {
+             File.AppendAllText(logFilePath, $"{DateTime.Now}: '{assemblyPath}' does not exist.\r\n");
+        }
+    }
+    catch (Exception ex)
+    {
+        // --- Log any exception that occurs within the handler ---
+        File.AppendAllText(logFilePath, $"{DateTime.Now}: EXCEPTION in FindAssembly resolving '{args.Name}': {ex}\r\n");
+    }
+
+    // Log failure to resolve
+    File.AppendAllText(logFilePath, $"{DateTime.Now}: Failed to resolve '{args.Name}'. Returning null.\r\n");
+    return null; // Return null if not found
+}
+
+        // --- ^ ADDED CODE END ^ ---
+
 
         #region plugin interface
         public bool isUnicode()
@@ -84,7 +154,7 @@ namespace NppDB
                 _ptrPluginName = Marshal.StringToHGlobalUni(PluginName);
             return _ptrPluginName;
         }
-        
+
         public void beNotified(ScNotification nc)
         {
             switch (nc.Header.Code)
@@ -125,7 +195,7 @@ namespace NppDB
         #endregion
 
         #region initialize and finalize a plugin
-        //initialize plugin's command menus  
+        //initialize plugin's command menus
         private void InitPlugin()
         {
             //plugin configuration
@@ -133,7 +203,7 @@ namespace NppDB
 
             var sbCfgPath = new StringBuilder(Win32.MAX_PATH);
             Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MAX_PATH, sbCfgPath);
-            
+
             _nppDbPluginDir = Path.GetDirectoryName(Uri.UnescapeDataString(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath));
             _nppDbConfigDir = Path.Combine(sbCfgPath.ToString(), PluginName);
             if (!Directory.Exists(_nppDbConfigDir))
@@ -141,8 +211,8 @@ namespace NppDB
                 try
                 {
                     Directory.CreateDirectory(_nppDbConfigDir);
-                } catch (Exception ex) 
-                { 
+                } catch (Exception ex)
+                {
                     MessageBox.Show("plugin dir : " + ex.Message);
                     throw ex;
                 }
@@ -157,7 +227,7 @@ namespace NppDB
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("config.xml : " + ex.Message); 
+                    MessageBox.Show("config.xml : " + ex.Message);
                     throw ex;
                 }
             }
@@ -170,11 +240,11 @@ namespace NppDB
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("dbconnects.xml : "+ ex.Message); 
+                    MessageBox.Show("dbconnects.xml : "+ ex.Message);
                     throw ex;
                 }
             }
-            
+
             // \AppData\Roaming\Notepad++\plugins\config\ -> \AppData\Roaming\Notepad++\
             _languageConfigPath = Path.Combine(new DirectoryInfo(sbCfgPath.ToString()).Parent.Parent.FullName, "nativeLang.xml");
             try
@@ -223,17 +293,17 @@ namespace NppDB
 
             var dict = new Dictionary<ParserMessageType, string>
             {
-                { ParserMessageType.EQUALS_ALL, 
+                { ParserMessageType.EQUALS_ALL,
                     "Probably =ANY was intended" },
-                { ParserMessageType.NOT_EQUALS_ANY, 
+                { ParserMessageType.NOT_EQUALS_ANY,
                     "Probably <>ALL was intended" },
-                { ParserMessageType.DOUBLE_QUOTES, 
+                { ParserMessageType.DOUBLE_QUOTES,
                     "Use of double quotes either refers to identifier or string literal by mistake" },
                 { ParserMessageType.SELECT_ALL_IN_SUB_QUERY,
                     "Reckless use of SELECT * in sub-query" },
-                { ParserMessageType.MULTIPLE_COLUMNS_IN_SUB_QUERY, 
+                { ParserMessageType.MULTIPLE_COLUMNS_IN_SUB_QUERY,
                     "Multiple columns selected in sub-query" },
-                { ParserMessageType.SELECT_ALL_IN_UNION_STATEMENT, 
+                { ParserMessageType.SELECT_ALL_IN_UNION_STATEMENT,
                     "Reckless use of SELECT * in UNION select statement" },
                 { ParserMessageType.DISTINCT_KEYWORD_WITH_GROUP_BY_CLAUSE,
                     "Both DISTINCT keyword and GROUP BY clause used" },
@@ -334,8 +404,8 @@ namespace NppDB
             ReadTranslations("General", dict1, ref _generalTranslations);
         }
 
-        private void ReadTranslations(string sectionName, 
-            in Dictionary<ParserMessageType, string> inputDictionary, 
+        private void ReadTranslations(string sectionName,
+            in Dictionary<ParserMessageType, string> inputDictionary,
             ref Dictionary<ParserMessageType, string> outputDictionary)
         {
             var codePage = Win32.SendMessage(GetCurrentScintilla(), SciMsg.SCI_GETCODEPAGE, 0, 0).ToInt32();
@@ -390,7 +460,7 @@ namespace NppDB
         #endregion
 
         #region plugin commands
-        
+
         private static CaretPosition GetCaretPosition()
         {
             return new CaretPosition
@@ -472,7 +542,7 @@ namespace NppDB
                 MessageBox.Show("No database connection is attached to the current document.\nPlease select \"Attach\" from database context menu.");
                 return;
             }
-            
+
             ShowSQLResult(result);
             var selectionOnly = true;
             var text = "";
@@ -498,13 +568,13 @@ namespace NppDB
                 result.SetError(ex.Message);
                 return;
             }
-            
+
             var textLength = editor.GetTextLength();
             var caretPosition = GetCaretPosition();
             if (caretPosition.Offset == textLength) return; // to fix crash, but should be avoided with code change somewhere
 
             var parserResult = result.Parse(text.Replace("\t", "    "), caretPosition);
-            var commands = selectionOnly 
+            var commands = selectionOnly
                 ? parserResult.Commands.Select(c => c.Text).ToList()
                 : parserResult.Commands.Skip(parserResult.EnclosingCommandIndex).Take(1).Select(c => c.Text).ToList();
 
@@ -558,7 +628,7 @@ namespace NppDB
                         {
                             warningText = $"{existingWarningText}\r\n{warningText}";
                         }
-                        else if (lineAnalyzeErrors.TryGetValue(line, out var existingErrorText)) 
+                        else if (lineAnalyzeErrors.TryGetValue(line, out var existingErrorText))
                         {
                             warningText = $"{warningText}\r\n{existingErrorText}";
                             lineAnalyzeErrors[line] = warningText;
@@ -651,11 +721,11 @@ namespace NppDB
         private void ExecuteSQL(IntPtr bufferID, string query)
         {
             var result = SQLResultManager.Instance.GetSQLResult(bufferID);
-            
+
             result.SetError("");
             result.Execute(new List<string> { query });
         }
-        
+
         private void CloseCurrentSQLResult()
         {
             var bufID = GetCurrentBufferId();
@@ -667,21 +737,21 @@ namespace NppDB
             var result = SQLResultManager.Instance.GetSQLResult(BufferID);
             if (result == null) return;
             SQLResultManager.Instance.Remove(BufferID);
-            
+
             _preViewHeights.Remove(result.Handle.ToInt32());
             if (_currentCtr == result) _currentCtr = null;
             hSplitBar.Visible = false;
             ResetViewPos(result);
             Win32.DestroyWindow(result.Handle);
         }
-        
+
         private void Disconnect(IDBConnect connection)
         {
             connection.Disconnect();
             CloseCurrentSQLResult();
             SQLResultManager.Instance.RemoveSQLResults(connection);
         }
-        
+
         private void Unregister(IDBConnect connection)
         {
             DBServerManager.Instance.Unregister(connection);
@@ -694,7 +764,7 @@ namespace NppDB
         {
             if (_frmDBExplorer == null)
             {
-               
+
                 _frmDBExplorer = new FrmDatabaseExplore();
                 _frmDBExplorer.AddNotifyHandler(
                     // toggle menu item and toolbar button when docking dialog's close button click
@@ -770,7 +840,7 @@ namespace NppDB
         private Control _currentCtr = null;
         internal void UpdateCurrentSQLResult()
         {
-            if (SQLResultManager.Instance.Count == 0) return;//don't execute follow when loading 
+            if (SQLResultManager.Instance.Count == 0) return;//don't execute follow when loading
             var bufID = GetCurrentBufferId();
             if (bufID == IntPtr.Zero) return;
             var result = SQLResultManager.Instance.GetSQLResult(bufID);
@@ -782,7 +852,7 @@ namespace NppDB
             }
             if (_currentCtr != null && _currentCtr != result && _currentCtr.Visible ) _currentCtr.Visible = false;
             _currentCtr = result;
-            SetResultPos(_currentCtr);   
+            SetResultPos(_currentCtr);
         }
 
         private Control AddSQLResult(IntPtr bufID, IDBConnect connect, ISQLExecutor sqlExecutor)
@@ -799,7 +869,7 @@ namespace NppDB
         }
 
         bool isDrag = false;
-        Control hSplitBar = null; 
+        Control hSplitBar = null;
         private Control CreateSplitBar()
         {
             var bar = new PictureBox() { Left = 0, Top = 300, Width = 400, Height = 6, Cursor = Cursors.SizeNS, Visible = false };
@@ -859,16 +929,16 @@ namespace NppDB
                 int sqlH = preSqlH + (preScinH - viewH);
                 int width = recScin.Right - recScin.Left;
                 Win32.SetWindowPos(
-                    hndScin, 
-                    IntPtr.Zero, 
-                    pRecScin.X, pRecScin.Y, 
-                    width, viewH, 
+                    hndScin,
+                    IntPtr.Zero,
+                    pRecScin.X, pRecScin.Y,
+                    width, viewH,
                     Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
                 Win32.SetWindowPos(
-                    _currentCtr.Handle, 
-                    IntPtr.Zero, 
-                    pRecScin.X, bar.Top + bar.Height, 
-                    width, sqlH, 
+                    _currentCtr.Handle,
+                    IntPtr.Zero,
+                    pRecScin.X, bar.Top + bar.Height,
+                    width, sqlH,
                     Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
                 _preViewHeights[key] = viewH;
 
@@ -885,7 +955,7 @@ namespace NppDB
             {
                 SetResultPos(control);
             }
-            
+
             if (!control.LinkedDBConnect.IsOpened)
             {
                 control.SetError("this database connection closed. open a database connection again.");
@@ -919,23 +989,23 @@ namespace NppDB
                 IntPtr parent = Win32.GetParent(hndScin); //actually parent is nppData._scintillaMainHandle
                 Point p = new Point(recScin.Left, recScin.Top);
                 Win32.ScreenToClient(parent, ref p);
-                
+
                 Win32.SetWindowPos(hndScin, IntPtr.Zero, p.X, p.Y, recScin.Right - recScin.Left, viewH , Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
                 /*
                 hSplitBar.Left = p.X; hSplitBar.Top = p.Y + viewH;hSplitBar.Width = recScin.Right - recScin.Left;
                 hSplitBar.Visible = true;
                 hSplitBar.BringToFront();
-                 * */ 
+                 * */
                 Win32.SetWindowPos(
-                    hSplitBar.Handle, 
-                    IntPtr.Zero, 
-                    p.X, p.Y + viewH, 
-                    recScin.Right - recScin.Left, hSplitBar.Height, 
+                    hSplitBar.Handle,
+                    IntPtr.Zero,
+                    p.X, p.Y + viewH,
+                    recScin.Right - recScin.Left, hSplitBar.Height,
                     Win32.SetWindowPosFlags.ShowWindow);
                 Win32.SetWindowPos(
-                    control.Handle, 
-                    IntPtr.Zero, p.X, p.Y + viewH + hSplitBar.Height, 
-                    recScin.Right - recScin.Left, sqlH, 
+                    control.Handle,
+                    IntPtr.Zero, p.X, p.Y + viewH + hSplitBar.Height,
+                    recScin.Right - recScin.Left, sqlH,
                     Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
                 control.Visible = true;
 
@@ -964,10 +1034,10 @@ namespace NppDB
                 Win32.ScreenToClient(parent, ref p);
 
                 Win32.SetWindowPos(
-                    hndScin, 
-                    IntPtr.Zero, 
-                    p.X, p.Y, 
-                    recScin.Right - recScin.Left, recScin.Bottom - recScin.Top + sqlH, 
+                    hndScin,
+                    IntPtr.Zero,
+                    p.X, p.Y,
+                    recScin.Right - recScin.Left, recScin.Bottom - recScin.Top + sqlH,
                     Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
             }
             catch (Exception ex)
@@ -976,7 +1046,7 @@ namespace NppDB
             }
 
         }
-        
+
         private static IntPtr? GetCurrentAttachedBufferId()
         {
             var bufferId = GetCurrentBufferId();
@@ -993,7 +1063,7 @@ namespace NppDB
         {
             return Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
         }
-        
+
         private void AppendToScintillaText(IntPtr scintillaHnd, string text)
         {
             int codePage = Win32.SendMessage(scintillaHnd, SciMsg.SCI_GETCODEPAGE, 0, 0).ToInt32();
@@ -1032,12 +1102,12 @@ namespace NppDB
                     case NppDBCommandType.NewFile://null
                         NewFile();
                         break;
-                    case NppDBCommandType.CreateResultView://id, IDBConnect 
+                    case NppDBCommandType.CreateResultView://id, IDBConnect
                         return AddSQLResult((IntPtr)parameters[0], (IDBConnect)parameters[1], (ISQLExecutor)parameters[2]);
                     case NppDBCommandType.DestroyResultView:
                         CloseCurrentSQLResult();
                         break;
-                    case NppDBCommandType.ExecuteSQL://id, text 
+                    case NppDBCommandType.ExecuteSQL://id, text
                         ExecuteSQL((IntPtr)parameters[0], (string)parameters[1]);
                         break;
                     case NppDBCommandType.GetAttachedBufferID:
