@@ -289,7 +289,7 @@ namespace NppDB
                 _translationsConfigPath.Equals(translationsConfigPath))
                 return;
             _translationsConfigPath = translationsConfigPath;
-            Console.WriteLine($"Plugin translations: {_translationsConfigPath}");
+            Console.WriteLine($@"Plugin translations: {_translationsConfigPath}");
 
             var dict = new Dictionary<ParserMessageType, string>
             {
@@ -412,7 +412,7 @@ namespace NppDB
             foreach (var entry in inputDictionary)
             {
                 var key = Enum.GetName(typeof(ParserMessageType), entry.Key);
-                Console.WriteLine($"Reading translation: [{sectionName}] {key}");
+                Console.WriteLine($@"Reading translation: [{sectionName}] {key}");
                 var bufferSize = 256;
                 var bytes = new byte[bufferSize];
                 Win32.GetPrivateProfileString(sectionName, key, entry.Value, bytes, bufferSize, _translationsConfigPath);
@@ -539,7 +539,8 @@ namespace NppDB
             var result = SQLResultManager.Instance.GetSQLResult(bufID);
             if (result == null)
             {
-                MessageBox.Show("No database connection is attached to the current document.\nPlease select \"Attach\" from database context menu.");
+                MessageBox.Show(@"No database connection is attached to the current document.
+Please select ""Attach"" from database context menu.");
                 return;
             }
 
@@ -861,7 +862,7 @@ namespace NppDB
             ctr.Height = _defaultSQLResultHeight;
             ctr.Visible = false;//prevent Flicker
             var ret = Win32.SetParent(ctr.Handle, nppData._nppHandle);
-            if (ret == null || ret == IntPtr.Zero) MessageBox.Show("setparent fail");
+            if (ret == null || ret == IntPtr.Zero) MessageBox.Show(@"setparent fail");
 
             if(hSplitBar== null) hSplitBar = CreateSplitBar();
 
@@ -948,7 +949,7 @@ namespace NppDB
             return bar;
         }
 
-        private void ShowSQLResult(SQLResult control)
+        private void ShowSQLResult(SqlResult control)
         {
             _currentCtr = control;
             if (!control.Visible)
@@ -956,7 +957,7 @@ namespace NppDB
                 SetResultPos(control);
             }
 
-            if (!control.LinkedDBConnect.IsOpened)
+            if (!control.LinkedDbConnect.IsOpened)
             {
                 control.SetError("this database connection closed. open a database connection again.");
             }

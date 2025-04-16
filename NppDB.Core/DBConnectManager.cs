@@ -136,7 +136,8 @@ namespace NppDB.Core
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show($"err FilePath: {filePath}\nError: {e}");
+                    MessageBox.Show($@"err FilePath: {filePath}
+Error: {e}");
                     continue;
                 }
 

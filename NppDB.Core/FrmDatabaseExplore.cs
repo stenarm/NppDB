@@ -67,16 +67,16 @@ namespace NppDB.Core
             trvDBList.ShowNodeToolTips = true;
         }
 
-        private List<NotifyHandler> _notifyHnds = new List<NotifyHandler>();
+        private readonly List<NotifyHandler> _notifyHandlers = new List<NotifyHandler>();
         public void AddNotifyHandler(NotifyHandler handler)
         {
-            _notifyHnds.Add(handler);
+            _notifyHandlers.Add(handler);
         }
 
         protected override void WndProc(ref Message m)
         {
-            if (_notifyHnds.Count > 0 && m.Msg == 0x4e)//WM_NOTIFY
-                foreach (var hnd in _notifyHnds)
+            if (_notifyHandlers.Count > 0 && m.Msg == 0x4e)//WM_NOTIFY
+                foreach (var hnd in _notifyHandlers)
                     hnd(ref m);
             
             base.WndProc(ref m);
@@ -100,29 +100,50 @@ namespace NppDB.Core
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
             var selDbType = dlg.SelectedDatabaseType;
             var dbcnn = DBServerManager.Instance.CreateConnect(selDbType);
-            if (!dbcnn.CheckLogin()) return;
+
+            bool checkLoginResult = false;
+            try
+            {
+                 checkLoginResult = dbcnn.CheckLogin();
+            }
+            catch(Exception exCheckLogin)
+            {
+                MessageBox.Show($"RegisterConnect: UNEXPECTED ERROR during CheckLogin call: {exCheckLogin.Message}", "Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                checkLoginResult = false;
+            }
+
+
+            if (!checkLoginResult)
+            {
+                 MessageBox.Show("RegisterConnect: Exiting because CheckLogin returned false.", "Debug RegisterConnect", MessageBoxButtons.OK);
+                 return;
+            }
 
             var tmpName = dbcnn.GetDefaultTitle();
             var maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Count();
-
             dbcnn.Title = tmpName + (maxVal == 0 ? "" : "(" + maxVal + ")");
 
-            dbcnn.Connect();
-            DBServerManager.Instance.Register(dbcnn);
-            var id = selDbType.Id;
-            var node = dbcnn as TreeNode;
+            try
+            {
+                dbcnn.Connect();
 
-            SetTreeNodeImage(node, id);
+                DBServerManager.Instance.Register(dbcnn);
+                var id = selDbType.Id;
+                var node = dbcnn as TreeNode;
+                SetTreeNodeImage(node, id);
+                trvDBList.Nodes.Add(node);
 
-            trvDBList.Nodes.Add(node);
+                if (trvDBList.TopNode != null && trvDBList.ItemHeight != trvDBList.TopNode.Bounds.Height + 4)
+                    trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
 
-            if (trvDBList.TopNode != null && trvDBList.ItemHeight != trvDBList.TopNode.Bounds.Height + 4)
-                trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
-
-            dbcnn.Attach();
-            dbcnn.Refresh();
-
-            ((TreeNode)dbcnn).Expand();
+                dbcnn.Attach();
+                dbcnn.Refresh();
+                ((TreeNode)dbcnn).Expand();
+            }
+            catch (Exception exConnect)
+            {
+                MessageBox.Show($"RegisterConnect: ERROR during Connect/Attach/Refresh: {exConnect.Message}" + (exConnect.InnerException != null ? " Inner: " + exConnect.InnerException.Message : ""), "Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void SetTreeNodeImage(TreeNode node, string id)

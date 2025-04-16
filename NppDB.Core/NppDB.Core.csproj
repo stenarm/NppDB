@@ -195,6 +195,10 @@
   <ItemGroup><None Include="Resources\column-1101.png" /></ItemGroup>
   <ItemGroup><None Include="Resources\column-1110.png" /></ItemGroup>
   <ItemGroup><None Include="Resources\column-1111.png" /></ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\gui_eraser1.png" />
+    <Content Include="Resources\x_letter1.png" />
+  </ItemGroup>
   
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
