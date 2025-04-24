@@ -7,7 +7,7 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Linq;
-using System.Reflection; // <-- Added for Assembly loading
+using System.Reflection;
 using System.Xml;
 using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
@@ -44,8 +44,6 @@ namespace NppDB
         private Dictionary<ParserMessageType, string> _warningMessages = new Dictionary<ParserMessageType, string>();
         private Dictionary<ParserMessageType, string> _generalTranslations = new Dictionary<ParserMessageType, string>();
 
-        // --- V ADDED CODE START V ---
-
         /// <summary>
         /// Static constructor to hook up the AssemblyResolve event handler as early as possible.
         /// </summary>
@@ -60,11 +58,10 @@ namespace NppDB
         /// </summary>
         private static Assembly FindAssembly(object sender, ResolveEventArgs args)
 {
-    string logFilePath = Path.Combine(Path.GetTempPath(), "NppDB_ResolveTrace.log"); // Log file path
+    string logFilePath = Path.Combine(Path.GetTempPath(), "NppDB_ResolveTrace.log");
 
     try
     {
-        // --- Log that the handler was called ---
         File.AppendAllText(logFilePath, $"{DateTime.Now}: Trying to resolve '{args.Name}' requested by '{args.RequestingAssembly?.FullName ?? "Unknown"}'.\r\n");
 
         var requestedAssemblyName = new AssemblyName(args.Name);
@@ -80,37 +77,33 @@ namespace NppDB
             File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
             return loadedAssembly;
         }
-        // Special check for NppDB.Comm in base directory
-        else if (requestedAssemblyName.Name.Equals("NppDB.Comm", StringComparison.OrdinalIgnoreCase))
+
+        if (requestedAssemblyName.Name.Equals("NppDB.Comm", StringComparison.OrdinalIgnoreCase))
         {
-             File.AppendAllText(logFilePath, $"{DateTime.Now}: '{requestedAssemblyName.Name}.dll' not found in plugin dir. Checking N++ base dir...\r\n");
-             string nppBaseDirectory = Path.GetFullPath(Path.Combine(pluginDirectory, "..", ".."));
-             string commPathInBase = Path.Combine(nppBaseDirectory, "NppDB.Comm.dll");
-             if (File.Exists(commPathInBase))
-             {
-                 File.AppendAllText(logFilePath, $"{DateTime.Now}: Found NppDB.Comm.dll at '{commPathInBase}'. Loading...\r\n");
-                 Assembly loadedAssembly = Assembly.LoadFrom(commPathInBase);
-                 File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
-                 return loadedAssembly;
-             } else {
-                  File.AppendAllText(logFilePath, $"{DateTime.Now}: NppDB.Comm.dll NOT found at '{commPathInBase}'.\r\n");
-             }
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: '{requestedAssemblyName.Name}.dll' not found in plugin dir. Checking N++ base dir...\r\n");
+            string nppBaseDirectory = Path.GetFullPath(Path.Combine(pluginDirectory, "..", ".."));
+            string commPathInBase = Path.Combine(nppBaseDirectory, "NppDB.Comm.dll");
+            if (File.Exists(commPathInBase))
+            {
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: Found NppDB.Comm.dll at '{commPathInBase}'. Loading...\r\n");
+                Assembly loadedAssembly = Assembly.LoadFrom(commPathInBase);
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
+                return loadedAssembly;
+            }
+
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: NppDB.Comm.dll NOT found at '{commPathInBase}'.\r\n");
         } else {
-             File.AppendAllText(logFilePath, $"{DateTime.Now}: '{assemblyPath}' does not exist.\r\n");
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: '{assemblyPath}' does not exist.\r\n");
         }
     }
     catch (Exception ex)
     {
-        // --- Log any exception that occurs within the handler ---
         File.AppendAllText(logFilePath, $"{DateTime.Now}: EXCEPTION in FindAssembly resolving '{args.Name}': {ex}\r\n");
     }
 
-    // Log failure to resolve
     File.AppendAllText(logFilePath, $"{DateTime.Now}: Failed to resolve '{args.Name}'. Returning null.\r\n");
-    return null; // Return null if not found
+    return null;
 }
-
-        // --- ^ ADDED CODE END ^ ---
 
 
         #region plugin interface
@@ -146,7 +139,6 @@ namespace NppDB
             return false;
         }
 
-        //todo implement to free _ptrPluginName in dispose()
         private IntPtr _ptrPluginName = IntPtr.Zero;
         public IntPtr getName()
         {
@@ -177,12 +169,6 @@ namespace NppDB
                 case (uint)SciMsg.SCN_PAINTED:
                     UpdateCurrentSQLResult();
                     break;
-                /*
-                case (uint)SciMsg.SCN_MODIFIED:
-                    if ((nc.ModificationType & 1) == 1)
-                        HandleTextUpdate();
-                    break;
-                */
                 case (uint)SciMsg.SCN_DWELLSTART:
                     ShowTip(nc.Position);
                     break;
@@ -195,10 +181,9 @@ namespace NppDB
         #endregion
 
         #region initialize and finalize a plugin
-        //initialize plugin's command menus
+
         private void InitPlugin()
         {
-            //plugin configuration
             DBServerManager.Instance.NppCommandHost = this;
 
             var sbCfgPath = new StringBuilder(Win32.MAX_PATH);
@@ -245,7 +230,6 @@ namespace NppDB
                 }
             }
 
-            // \AppData\Roaming\Notepad++\plugins\config\ -> \AppData\Roaming\Notepad++\
             _languageConfigPath = Path.Combine(new DirectoryInfo(sbCfgPath.ToString()).Parent.Parent.FullName, "nativeLang.xml");
             try
             {
@@ -263,16 +247,11 @@ namespace NppDB
             SetCommand(3, "Clear analysis", ClearAnalysis, new ShortcutKey(true, false, true, Keys.F9));
             SetCommand(4, "Open console", OpenConsole);
             SetCommand(5, "About", ShowAbout);
-            //SetCommand(3, "Options", ShowOptions);
             _cmdFrmDBExplorerIdx = 2;
         }
 
         private void ReadTranslations()
         {
-            // There doesn't seem to be plugin communication to retrieve selected localization language
-            // Therefore read from Notepad++ 'nativeLang.xml' config
-            // (although this is a silly way since we keep re-reading it for any changes on SCN_UPDATE_UI notification):
-            // <NotepadPlus><Native-Langue name="English" filename="english.xml" version="8.4.6">
             var translationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini");
             try
             {
@@ -421,7 +400,7 @@ namespace NppDB
             }
         }
 
-        private const UInt32 STD_OUTPUT_HANDLE = 0xFFFFFFF5; // -11
+        private const UInt32 STD_OUTPUT_HANDLE = 0xFFFFFFF5;
         private const int MY_CODE_PAGE = 437;
 
         private void OpenConsole()
@@ -467,7 +446,7 @@ namespace NppDB
             {
                 Line = Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTLINE, 0, 0).ToInt32() + 1,
                 Column = Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTCOLUMN, 0, 0).ToInt32(),
-                Offset = Win32.SendMessage(nppData._scintillaMainHandle, (uint)SciMsg.SCI_GETCURRENTPOS, 0, 0).ToInt32(), // is byte offset
+                Offset = Win32.SendMessage(nppData._scintillaMainHandle, (uint)SciMsg.SCI_GETCURRENTPOS, 0, 0).ToInt32(),
             };
         }
 
@@ -572,7 +551,7 @@ Please select ""Attach"" from database context menu.");
 
             var textLength = editor.GetTextLength();
             var caretPosition = GetCaretPosition();
-            if (caretPosition.Offset == textLength) return; // to fix crash, but should be avoided with code change somewhere
+            if (caretPosition.Offset == textLength) return;
 
             var parserResult = result.Parse(text.Replace("\t", "    "), caretPosition);
             var commands = selectionOnly
@@ -585,7 +564,6 @@ Please select ""Attach"" from database context menu.");
             editor.SetIndicatorCurrent(21);
             editor.IndicatorClearRange(0, textLength);
 
-            // green outline
             var baseLine = 0;
             if (selectionOnly)
             {
@@ -691,8 +669,6 @@ Please select ""Attach"" from database context menu.");
                     var startOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn);
                     var stopOffset = editor.FindColumn(baseLine + error.StartLine - 1, error.StartColumn + length);
                     editor.IndicatorFillRange(startOffset, stopOffset - startOffset);
-                    // var suggestionText = string.Join(" ", parserResult.Suggestions.ToArray());
-                    // editor.AutoCShow(length - 1, suggestionText);
                 }
             }
             result.SetError("");
@@ -746,14 +722,14 @@ Please select ""Attach"" from database context menu.");
             Win32.DestroyWindow(result.Handle);
         }
 
-        private void Disconnect(IDBConnect connection)
+        private void Disconnect(IDbConnect connection)
         {
             connection.Disconnect();
             CloseCurrentSQLResult();
             SQLResultManager.Instance.RemoveSQLResults(connection);
         }
 
-        private void Unregister(IDBConnect connection)
+        private void Unregister(IDbConnect connection)
         {
             DBServerManager.Instance.Unregister(connection);
             connection.Disconnect();
@@ -767,9 +743,7 @@ Please select ""Attach"" from database context menu.");
             {
 
                 _frmDBExplorer = new FrmDatabaseExplore();
-                _frmDBExplorer.AddNotifyHandler(
-                    // toggle menu item and toolbar button when docking dialog's close button click
-                    (ref Message msg) =>
+                _frmDBExplorer.AddNotifyHandler((ref Message msg) =>
                     {
                         ScNotification nc = (ScNotification)Marshal.PtrToStructure(msg.LParam, typeof(ScNotification));
                         if (nc.Header.Code != (uint)DockMgrMsg.DMN_CLOSE) return;
@@ -796,7 +770,6 @@ Please select ""Attach"" from database context menu.");
                 nppTbData.hClient = _frmDBExplorer.Handle;
                 nppTbData.pszName = _funcItems.Items[_cmdFrmDBExplorerIdx]._itemName;
                 nppTbData.dlgID = _cmdFrmDBExplorerIdx;
-                //default docking
                 nppTbData.uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR;
                 nppTbData.hIconTab = (uint)tbIcon.Handle;
 
@@ -805,7 +778,6 @@ Please select ""Attach"" from database context menu.");
                 Marshal.StructureToPtr(nppTbData, ptrNppTbData, false);
 
                 Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, ptrNppTbData);
-                //toogle both menu item and toolbar button
                 Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDBExplorerIdx]._cmdID, 1);
 
             }
@@ -841,7 +813,7 @@ Please select ""Attach"" from database context menu.");
         private Control _currentCtr = null;
         internal void UpdateCurrentSQLResult()
         {
-            if (SQLResultManager.Instance.Count == 0) return;//don't execute follow when loading
+            if (SQLResultManager.Instance.Count == 0) return;
             var bufID = GetCurrentBufferId();
             if (bufID == IntPtr.Zero) return;
             var result = SQLResultManager.Instance.GetSQLResult(bufID);
@@ -856,11 +828,11 @@ Please select ""Attach"" from database context menu.");
             SetResultPos(_currentCtr);
         }
 
-        private Control AddSQLResult(IntPtr bufID, IDBConnect connect, ISQLExecutor sqlExecutor)
+        private Control AddSQLResult(IntPtr bufID, IDbConnect connect, ISQLExecutor sqlExecutor)
         {
             var ctr = SQLResultManager.Instance.CreateSQLResult(bufID, connect, sqlExecutor);
             ctr.Height = _defaultSQLResultHeight;
-            ctr.Visible = false;//prevent Flicker
+            ctr.Visible = false;
             var ret = Win32.SetParent(ctr.Handle, nppData._nppHandle);
             if (ret == null || ret == IntPtr.Zero) MessageBox.Show(@"setparent fail");
 
@@ -922,7 +894,7 @@ Please select ""Attach"" from database context menu.");
                 IntPtr hndScin = GetCurrentScintilla();
                 Win32.GetWindowRect(hndScin, out recScin);
 
-                IntPtr parent = Win32.GetParent(hndScin); //actually parent is nppData._scintillaMainHandle
+                IntPtr parent = Win32.GetParent(hndScin);
                 Point pRecScin = new Point(recScin.Left, recScin.Top);
                 Win32.ScreenToClient(parent, ref pRecScin);
 
@@ -987,16 +959,11 @@ Please select ""Attach"" from database context menu.");
                 int viewH = recScin.Bottom - recScin.Top;
                 if (viewH != preViewH) viewH -= sqlH + hSplitBar.Height;
 
-                IntPtr parent = Win32.GetParent(hndScin); //actually parent is nppData._scintillaMainHandle
+                IntPtr parent = Win32.GetParent(hndScin);
                 Point p = new Point(recScin.Left, recScin.Top);
                 Win32.ScreenToClient(parent, ref p);
 
                 Win32.SetWindowPos(hndScin, IntPtr.Zero, p.X, p.Y, recScin.Right - recScin.Left, viewH , Win32.SetWindowPosFlags.NoZOrder | Win32.SetWindowPosFlags.ShowWindow);
-                /*
-                hSplitBar.Left = p.X; hSplitBar.Top = p.Y + viewH;hSplitBar.Width = recScin.Right - recScin.Left;
-                hSplitBar.Visible = true;
-                hSplitBar.BringToFront();
-                 * */
                 Win32.SetWindowPos(
                     hSplitBar.Handle,
                     IntPtr.Zero,
@@ -1030,7 +997,7 @@ Please select ""Attach"" from database context menu.");
                 IntPtr hndScin = GetCurrentScintilla();
                 Win32.GetWindowRect(hndScin, out recScin);
 
-                IntPtr parent = Win32.GetParent(hndScin); //actually parent is nppData._scintillaMainHandle
+                IntPtr parent = Win32.GetParent(hndScin);
                 Point p = new Point(recScin.Left, recScin.Top);
                 Win32.ScreenToClient(parent, ref p);
 
@@ -1076,7 +1043,6 @@ Please select ""Attach"" from database context menu.");
             {
                 Marshal.Copy(bytes, 0, ptrChars, bytes.Length);
                 Win32.SendMessage(scintillaHnd, SciMsg.SCI_APPENDTEXT, bytes.Length , ptrChars);
-                //todo selection, scroll
             }
             catch (Exception ex)
             {
@@ -1094,21 +1060,21 @@ Please select ""Attach"" from database context menu.");
             {
                 switch (type)
                 {
-                    case NppDBCommandType.ActivateBuffer://id
+                    case NppDBCommandType.ActivateBuffer:
                         ActivateBufferId((int)parameters[0]);
                         break;
-                    case NppDBCommandType.AppendToCurrentView:// text
+                    case NppDBCommandType.AppendToCurrentView:
                         AppendToScintillaText(GetCurrentScintilla(), (string)parameters[0]);
                         break;
-                    case NppDBCommandType.NewFile://null
+                    case NppDBCommandType.NewFile:
                         NewFile();
                         break;
-                    case NppDBCommandType.CreateResultView://id, IDBConnect
-                        return AddSQLResult((IntPtr)parameters[0], (IDBConnect)parameters[1], (ISQLExecutor)parameters[2]);
+                    case NppDBCommandType.CreateResultView:
+                        return AddSQLResult((IntPtr)parameters[0], (IDbConnect)parameters[1], (ISQLExecutor)parameters[2]);
                     case NppDBCommandType.DestroyResultView:
                         CloseCurrentSQLResult();
                         break;
-                    case NppDBCommandType.ExecuteSQL://id, text
+                    case NppDBCommandType.ExecuteSQL:
                         ExecuteSQL((IntPtr)parameters[0], (string)parameters[1]);
                         break;
                     case NppDBCommandType.GetAttachedBufferID:

@@ -14,14 +14,14 @@ namespace NppDB.Core
 {
     public class DBServerManager 
     {
-        private readonly List<IDBConnect> _dbConnects = new List<IDBConnect>();
+        private readonly List<IDbConnect> _dbConnects = new List<IDbConnect>();
 
         private DBServerManager()
         {
             LoadConnectTypes();
         }
         
-        public void Register(IDBConnect dbConnect)
+        public void Register(IDbConnect dbConnect)
         {
             if (_dbConnects.Any(x => x.Title.Equals(dbConnect.Title))) 
                 throw new ApplicationException("Connection Name exists!");
@@ -31,7 +31,7 @@ namespace NppDB.Core
             _dbConnects.Add(dbConnect);
         }
 
-        public void Unregister(IDBConnect dbConnect)
+        public void Unregister(IDbConnect dbConnect)
         {
             _dbConnects.Remove(dbConnect);
         }
@@ -41,7 +41,7 @@ namespace NppDB.Core
             _dbConnects.AsParallel().ForAll((x) =>{try { x.Refresh(); } catch { }});
         }
 
-        public IEnumerable<IDBConnect> Connections { get { return _dbConnects; } }
+        public IEnumerable<IDbConnect> Connections { get { return _dbConnects; } }
 
         public void SaveToXml(string path)
         {
@@ -88,13 +88,13 @@ namespace NppDB.Core
             
             try
             {
-                var conns = new List<IDBConnect>();
+                var conns = new List<IDbConnect>();
                 foreach (var dbTyp in _dbTypes)
                 {
                     foreach (XmlNode node in xdoc.SelectNodes(@"//connects/" + dbTyp.ConnectType.Name))
                     {
                         XmlSerializer serializer = new XmlSerializer(dbTyp.ConnectType, GetXmlOver());
-                        var conn = serializer.Deserialize(new StringReader(node.OuterXml)) as IDBConnect;
+                        var conn = serializer.Deserialize(new StringReader(node.OuterXml)) as IDbConnect;
                         if (NppCommandHost != null && conn is INppDBCommandClient) ((INppDBCommandClient)conn).SetCommandHost(NppCommandHost);
                         conns.Add(conn);
                     }
@@ -111,9 +111,9 @@ namespace NppDB.Core
 
         public INppDBCommandHost NppCommandHost { get; set; }
 
-        public IDBConnect CreateConnect(DatabaseType databaseType)
+        public IDbConnect CreateConnect(DatabaseType databaseType)
         {
-            var connect = databaseType.ConnectType.Assembly.CreateInstance(databaseType.ConnectType.FullName) as IDBConnect;
+            var connect = databaseType.ConnectType.Assembly.CreateInstance(databaseType.ConnectType.FullName) as IDbConnect;
             if (NppCommandHost != null && connect is INppDBCommandClient) ((INppDBCommandClient)connect).SetCommandHost(NppCommandHost);
             return connect;
         }

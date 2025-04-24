@@ -13,7 +13,7 @@ namespace NppDB.Core
         private static readonly List<WeakReference<SqlResult>> ActiveInstances = new List<WeakReference<SqlResult>>();
         private static readonly object ListLock = new object();
 
-        public SqlResult(IDBConnect connect, ISQLExecutor sqlExecutor)
+        public SqlResult(IDbConnect connect, ISQLExecutor sqlExecutor)
         {
             InitializeComponent();
             Init();
@@ -268,17 +268,17 @@ namespace NppDB.Core
             dgv.AutoResizeRowHeadersWidth(DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders);
         }
 
-        public IDBConnect LinkedDbConnect { get; private set; }
+        public IDbConnect LinkedDbConnect { get; private set; }
 
         private ISQLExecutor _exec;
-        private void SetConnect(IDBConnect connect, ISQLExecutor sqlExecutor)
+        private void SetConnect(IDbConnect connect, ISQLExecutor sqlExecutor)
         {
             if (_exec == null)
             {
                 _exec = sqlExecutor;
             }
             LinkedDbConnect = connect;
-            lblConnect.Text = connect.Title;
+            lblConnect.Text = $@"{connect.DatabaseSystemName}: {connect.Title}";
             lblAccount.Text = connect.Account;
             lblElapsed.Text = "";
             btnStop.Enabled = false;
@@ -403,7 +403,7 @@ namespace NppDB.Core
                 Invoke(new Action(delegate
                 {
                     var elapsed = (DateTime.Now - startPoint).ToString("c");
-                    lblElapsed.Text = elapsed;
+                    lblElapsed.Text = $@"Elapsed time: {elapsed}";
 
                     btnStop.Enabled = _exec.CanStop();
 

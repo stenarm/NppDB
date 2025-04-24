@@ -1,6 +1,6 @@
 ﻿namespace NppDB.Comm
 {
-    public interface IDBConnect
+    public interface IDbConnect
     {
         void Reset();
         string Account { get; set; }
@@ -15,5 +15,6 @@
         void Refresh();
         string ServerAddress { get; set; }
         bool IsOpened { get; }
+        string DatabaseSystemName { get; }
     }
 }

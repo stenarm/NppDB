@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using NppDB;
 using NppDB.Comm;
-
+using NppDB.Core.Properties;
+using NppDB.PostgreSQL;
 
 namespace NppDB.Core
 {
@@ -19,32 +19,32 @@ namespace NppDB.Core
 
         private void Init()
         {
-            trvDBList.ImageList = new ImageList() { ColorDepth = ColorDepth.Depth32Bit };
-            trvDBList.ImageList.Images.Add(NppDB.Core.Properties.Resources.bullet);
-            trvDBList.ImageList.Images.Add("Group", NppDB.Core.Properties.Resources.Folder);
-            trvDBList.ImageList.Images.Add("Database", NppDB.Core.Properties.Resources.Database);
-            trvDBList.ImageList.Images.Add("Table", NppDB.Core.Properties.Resources.Table);
+            trvDBList.ImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit };
+            trvDBList.ImageList.Images.Add(Resources.bullet);
+            trvDBList.ImageList.Images.Add("Group", Resources.Folder);
+            trvDBList.ImageList.Images.Add("Database", Resources.Database);
+            trvDBList.ImageList.Images.Add("Table", Resources.Table);
 
-            trvDBList.ImageList.Images.Add("Primary_Key", NppDB.Core.Properties.Resources.primaryKey);
-            trvDBList.ImageList.Images.Add("Foreign_Key", NppDB.Core.Properties.Resources.foreignKey);
-            trvDBList.ImageList.Images.Add("Index", NppDB.Core.Properties.Resources.index);
-            trvDBList.ImageList.Images.Add("Unique_Index", NppDB.Core.Properties.Resources.uniqueIndex);
-            trvDBList.ImageList.Images.Add("Column_0000", NppDB.Core.Properties.Resources.column0000);
-            trvDBList.ImageList.Images.Add("Column_0001", NppDB.Core.Properties.Resources.column0001);
-            trvDBList.ImageList.Images.Add("Column_0010", NppDB.Core.Properties.Resources.column0010);
-            trvDBList.ImageList.Images.Add("Column_0011", NppDB.Core.Properties.Resources.column0011);
-            trvDBList.ImageList.Images.Add("Column_0100", NppDB.Core.Properties.Resources.column0100);
-            trvDBList.ImageList.Images.Add("Column_0101", NppDB.Core.Properties.Resources.column0101);
-            trvDBList.ImageList.Images.Add("Column_0110", NppDB.Core.Properties.Resources.column0110);
-            trvDBList.ImageList.Images.Add("Column_0111", NppDB.Core.Properties.Resources.column0111);
-            trvDBList.ImageList.Images.Add("Column_1000", NppDB.Core.Properties.Resources.column1000);
-            trvDBList.ImageList.Images.Add("Column_1001", NppDB.Core.Properties.Resources.column1001);
-            trvDBList.ImageList.Images.Add("Column_1010", NppDB.Core.Properties.Resources.column1010);
-            trvDBList.ImageList.Images.Add("Column_1011", NppDB.Core.Properties.Resources.column1011);
-            trvDBList.ImageList.Images.Add("Column_1100", NppDB.Core.Properties.Resources.column1100);
-            trvDBList.ImageList.Images.Add("Column_1101", NppDB.Core.Properties.Resources.column1101);
-            trvDBList.ImageList.Images.Add("Column_1110", NppDB.Core.Properties.Resources.column1110);
-            trvDBList.ImageList.Images.Add("Column_1111", NppDB.Core.Properties.Resources.column1111);
+            trvDBList.ImageList.Images.Add("Primary_Key", Resources.primaryKey);
+            trvDBList.ImageList.Images.Add("Foreign_Key", Resources.foreignKey);
+            trvDBList.ImageList.Images.Add("Index", Resources.index);
+            trvDBList.ImageList.Images.Add("Unique_Index", Resources.uniqueIndex);
+            trvDBList.ImageList.Images.Add("Column_0000", Resources.column0000);
+            trvDBList.ImageList.Images.Add("Column_0001", Resources.column0001);
+            trvDBList.ImageList.Images.Add("Column_0010", Resources.column0010);
+            trvDBList.ImageList.Images.Add("Column_0011", Resources.column0011);
+            trvDBList.ImageList.Images.Add("Column_0100", Resources.column0100);
+            trvDBList.ImageList.Images.Add("Column_0101", Resources.column0101);
+            trvDBList.ImageList.Images.Add("Column_0110", Resources.column0110);
+            trvDBList.ImageList.Images.Add("Column_0111", Resources.column0111);
+            trvDBList.ImageList.Images.Add("Column_1000", Resources.column1000);
+            trvDBList.ImageList.Images.Add("Column_1001", Resources.column1001);
+            trvDBList.ImageList.Images.Add("Column_1010", Resources.column1010);
+            trvDBList.ImageList.Images.Add("Column_1011", Resources.column1011);
+            trvDBList.ImageList.Images.Add("Column_1100", Resources.column1100);
+            trvDBList.ImageList.Images.Add("Column_1101", Resources.column1101);
+            trvDBList.ImageList.Images.Add("Column_1110", Resources.column1110);
+            trvDBList.ImageList.Images.Add("Column_1111", Resources.column1111);
 
             foreach (var dbcnn in DBServerManager.Instance.Connections)
             {
@@ -75,7 +75,7 @@ namespace NppDB.Core
 
         protected override void WndProc(ref Message m)
         {
-            if (_notifyHandlers.Count > 0 && m.Msg == 0x4e)//WM_NOTIFY
+            if (_notifyHandlers.Count > 0 && m.Msg == 0x4e)
                 foreach (var hnd in _notifyHandlers)
                     hnd(ref m);
             
@@ -99,46 +99,46 @@ namespace NppDB.Core
             var dlg = new frmSelectDbType();
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
             var selDbType = dlg.SelectedDatabaseType;
-            var dbcnn = DBServerManager.Instance.CreateConnect(selDbType);
+            var dbConnection = DBServerManager.Instance.CreateConnect(selDbType);
 
-            bool checkLoginResult = false;
+            bool checkLoginResult;
             try
             {
-                 checkLoginResult = dbcnn.CheckLogin();
+                checkLoginResult = dbConnection.CheckLogin();
             }
-            catch(Exception exCheckLogin)
+            catch (Exception exCheckLogin)
             {
                 MessageBox.Show($"RegisterConnect: UNEXPECTED ERROR during CheckLogin call: {exCheckLogin.Message}", "Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 checkLoginResult = false;
             }
 
-
             if (!checkLoginResult)
             {
-                 MessageBox.Show("RegisterConnect: Exiting because CheckLogin returned false.", "Debug RegisterConnect", MessageBoxButtons.OK);
-                 return;
+                return;
             }
 
-            var tmpName = dbcnn.GetDefaultTitle();
-            var maxVal = DBServerManager.Instance.Connections.Where(x => x.Title.StartsWith(tmpName)).Count();
-            dbcnn.Title = tmpName + (maxVal == 0 ? "" : "(" + maxVal + ")");
+            var tmpName = dbConnection.GetDefaultTitle();
+            var existingCount = DBServerManager.Instance.Connections.Count(x => x.Title.StartsWith(tmpName));
+            dbConnection.Title = tmpName + (existingCount == 0 ? "" : "(" + existingCount + ")");
 
-            try
+            DBServerManager.Instance.Register(dbConnection);
+            var id = selDbType.Id;
+            var node = dbConnection as TreeNode;
+            if (node != null)
             {
-                dbcnn.Connect();
-
-                DBServerManager.Instance.Register(dbcnn);
-                var id = selDbType.Id;
-                var node = dbcnn as TreeNode;
                 SetTreeNodeImage(node, id);
                 trvDBList.Nodes.Add(node);
 
                 if (trvDBList.TopNode != null && trvDBList.ItemHeight != trvDBList.TopNode.Bounds.Height + 4)
                     trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
+            }
 
-                dbcnn.Attach();
-                dbcnn.Refresh();
-                ((TreeNode)dbcnn).Expand();
+            try
+            {
+                dbConnection.Connect();
+                dbConnection.Attach();
+                dbConnection.Refresh();
+                node?.Expand();
             }
             catch (Exception exConnect)
             {
@@ -156,10 +156,10 @@ namespace NppDB.Core
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            if (!(trvDBList.SelectedNode is IDBConnect connector)) return;
+            if (!(trvDBList.SelectedNode is IDbConnect connector)) return;
             try
             {
-                string result = connector.ConnectAndAttach();
+                var result = connector.ConnectAndAttach();
                 if (result != "CONTINUE") { return; }
                 trvDBList.SelectedNode.Expand();
             }
@@ -171,16 +171,14 @@ namespace NppDB.Core
         
         private void btnDisconnect_Click(object sender, EventArgs e)
         {
-            var connection = trvDBList.SelectedNode as IDBConnect;
-            if (connection == null || trvDBList.SelectedNode.Level > 0) return;
-            
-            if (DisconnectHandler != null) DisconnectHandler(connection);
+            if (!(trvDBList.SelectedNode is IDbConnect connection) || trvDBList.SelectedNode.Level > 0) return;
+
+            DisconnectHandler?.Invoke(connection);
         }
 
         private void btnUnregister_Click(object sender, EventArgs e)
         {
-            var connection = trvDBList.SelectedNode as IDBConnect;
-            if (connection == null || trvDBList.SelectedNode.Level > 0) return;
+            if (!(trvDBList.SelectedNode is IDbConnect connection) || trvDBList.SelectedNode.Level > 0) return;
 
             trvDBList.Nodes.Remove(trvDBList.SelectedNode);
             btnRegister.Enabled = true;
@@ -189,10 +187,10 @@ namespace NppDB.Core
             btnDisconnect.Enabled = false;
             btnRefresh.Enabled = false;
 
-            if (UnregisterHandler != null) UnregisterHandler(connection);
+            UnregisterHandler?.Invoke(connection);
         }
 
-        public delegate void DatabaseEventHandler(IDBConnect connection);
+        public delegate void DatabaseEventHandler(IDbConnect connection);
 
         public DatabaseEventHandler DisconnectHandler { get; set; }
         public DatabaseEventHandler UnregisterHandler { get; set; }
@@ -205,21 +203,18 @@ namespace NppDB.Core
 
         private void trvDBList_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            btnUnregister.Enabled = e.Node is IDBConnect;
-            var dbconn = GetRootParent(e.Node) as IDBConnect;
-            btnConnect.Enabled = e.Node is IDBConnect && !dbconn.IsOpened;
-            btnDisconnect.Enabled = e.Node is IDBConnect && dbconn.IsOpened;
-            btnRefresh.Enabled = e.Node is IRefreshable && dbconn.IsOpened ;
-
+            btnUnregister.Enabled = e.Node is IDbConnect;
+            if (!(GetRootParent(e.Node) is IDbConnect dbConnection)) return;
+            btnConnect.Enabled = e.Node is IDbConnect && !dbConnection.IsOpened;
+            btnDisconnect.Enabled = e.Node is IDbConnect && dbConnection.IsOpened;
+            btnRefresh.Enabled = e.Node is IRefreshable && dbConnection.IsOpened;
         }
 
         private void trvDBList_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
-            {
-                trvDBList.SelectedNode = e.Node;
-                e.Node.ContextMenuStrip = CreateMenu(e.Node);
-            }
+            if (e.Button != MouseButtons.Right) return;
+            trvDBList.SelectedNode = e.Node;
+            e.Node.ContextMenuStrip = CreateMenu(e.Node);
         }
 
         private static TreeNode GetRootParent(TreeNode node)
@@ -230,13 +225,17 @@ namespace NppDB.Core
 
         private void trvDBList_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            IRefreshable r = null;
+            IRefreshable r;
             if (e.Button != MouseButtons.Left || (r = e.Node as IRefreshable) == null) return;
-            var dbconn = GetRootParent(e.Node) as IDBConnect;
+            var dbConnection = GetRootParent(e.Node) as IDbConnect;
             if ( e.Node.Nodes.Count == 0)
             {
-                string result = dbconn.ConnectAndAttach();
-                if (result != "CONTINUE") { return;  }
+                if (dbConnection != null)
+                {
+                    var result = dbConnection.ConnectAndAttach();
+                    if (result != "CONTINUE") { return;  }
+                }
+
                 r.Refresh();
             }
             e.Node.Expand();
@@ -244,17 +243,71 @@ namespace NppDB.Core
 
         private ContextMenuStrip CreateMenu(TreeNode node)
         {
-            Console.WriteLine("createmenu: " + node.Text);
-            if (!(node is IMenuProvider menuCreator)) return null;
-            var menu = menuCreator.GetMenu();
-            if (!(node is IDBConnect connection)) return menu;
-            
-            menu.Items.Insert(0, new ToolStripButton("Unregister", null, btnUnregister_Click));
-            menu.Items.Insert(1, new ToolStripSeparator());
-            menu.Items.Insert(2, new ToolStripButton("Connect", null, btnConnect_Click) { Enabled = !connection.IsOpened });
-            menu.Items.Insert(3, new ToolStripButton("Disconnect", null, btnDisconnect_Click) { Enabled = connection.IsOpened });
-            menu.Items.Insert(4, new ToolStripSeparator());
+            var menuCreator = node as IMenuProvider;
+            var menu = menuCreator?.GetMenu() ?? new ContextMenuStrip { ShowImageMargin = false };
+
+            var insertIndex = 0;
+
+            if (node is PostgreSqlConnect)
+            {
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Edit Connection", null, EditConnection_Click));
+                menu.Items.Insert(insertIndex++, new ToolStripSeparator());
+            }
+
+            if (node is IDbConnect connection)
+            {
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Unregister", null, btnUnregister_Click));
+                menu.Items.Insert(insertIndex++, new ToolStripSeparator());
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Connect", null, btnConnect_Click) { Enabled = !connection.IsOpened });
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Disconnect", null, btnDisconnect_Click) { Enabled = connection.IsOpened });
+                menu.Items.Insert(insertIndex++, new ToolStripSeparator());
+            }
+
+            if (menu.Items.Count <= 0) return menu;
+            if (menu.Items[menu.Items.Count - 1] is ToolStripSeparator && (menuCreator?.GetMenu() == null || menuCreator.GetMenu().Items.Count == 0))
+            {
+                menu.Items.RemoveAt(menu.Items.Count - 1);
+            }
+            if (menu.Items.Count > 0 && menu.Items[0] is ToolStripSeparator && insertIndex == menu.Items.Count && menuCreator?.GetMenu() == null)
+            {
+                menu.Items.RemoveAt(0);
+            }
+
+
             return menu;
+        }
+        
+        private void EditConnection_Click(object sender, EventArgs e)
+        {
+            if (trvDBList.SelectedNode is PostgreSqlConnect pgConnection)
+            {
+                try
+                {
+                    var changesMade = pgConnection.CheckLogin();
+
+                    if (!changesMade) return;
+                    trvDBList.SelectedNode.Text = pgConnection.Title;
+
+                    if (pgConnection.IsOpened)
+                    {
+                        MessageBox.Show(this, "Connection properties have been updated.\n\nPlease disconnect and reconnect for these changes\nto take effect on the live database connection.",
+                            "Properties Changed",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(this, $"Error opening connection properties:\n{ex.Message}",
+                                    "Error",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                }
+            }
+            else
+            {
+                MessageBox.Show(this, "The selected item is not a PostgreSQL connection.", "Cannot Edit Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
     }
 }

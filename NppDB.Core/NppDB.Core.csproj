@@ -146,6 +146,14 @@
       <Name>NppDB.Comm</Name>
       <Private>False</Private>
     </ProjectReference>
+    <ProjectReference Include="..\NppDB.MSAccess\NppDB.MSAccess.csproj">
+      <Project>{90a00b09-4f04-4f10-aa47-333c633fcd4b}</Project>
+      <Name>NppDB.MSAccess</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NppDB.PostgreSQL\NppDB.PostgreSQL.csproj">
+      <Project>{54bf6d02-bef9-4c4f-b439-eb3bb87566af}</Project>
+      <Name>NppDB.PostgreSQL</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\add16.png" />

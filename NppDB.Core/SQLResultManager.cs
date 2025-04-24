@@ -8,7 +8,7 @@ namespace NppDB.Core
     public class SQLResultManager
     {
         private Dictionary<IntPtr, SqlResult> _bind = new Dictionary<IntPtr, SqlResult>();
-        public SqlResult CreateSQLResult(IntPtr id, IDBConnect connect, ISQLExecutor sqlExecutor)
+        public SqlResult CreateSQLResult(IntPtr id, IDbConnect connect, ISQLExecutor sqlExecutor)
         {
             if (_bind.ContainsKey(id)) 
                 throw new ApplicationException("A database connection is already attached to the current document.");
@@ -26,7 +26,7 @@ namespace NppDB.Core
         {
             return _bind.ContainsKey(id) ? _bind[id] : null;
         }
-        public void RemoveSQLResults(IDBConnect connect)
+        public void RemoveSQLResults(IDbConnect connect)
         {
             foreach (var result in _bind.Where(x => x.Value.LinkedDbConnect == connect).Select(x => x.Key).ToList())
             {
