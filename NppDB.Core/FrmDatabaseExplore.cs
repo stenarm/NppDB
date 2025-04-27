@@ -250,16 +250,16 @@ namespace NppDB.Core
 
             if (node is PostgreSqlConnect)
             {
-                menu.Items.Insert(insertIndex++, new ToolStripButton("Edit Connection", null, EditConnection_Click));
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Edit database connection details", null, EditConnection_Click));
                 menu.Items.Insert(insertIndex++, new ToolStripSeparator());
             }
 
             if (node is IDbConnect connection)
             {
-                menu.Items.Insert(insertIndex++, new ToolStripButton("Unregister", null, btnUnregister_Click));
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Remove this database connection", null, btnUnregister_Click));
                 menu.Items.Insert(insertIndex++, new ToolStripSeparator());
-                menu.Items.Insert(insertIndex++, new ToolStripButton("Connect", null, btnConnect_Click) { Enabled = !connection.IsOpened });
-                menu.Items.Insert(insertIndex++, new ToolStripButton("Disconnect", null, btnDisconnect_Click) { Enabled = connection.IsOpened });
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Connect to this database", null, btnConnect_Click) { Enabled = !connection.IsOpened });
+                menu.Items.Insert(insertIndex++, new ToolStripButton("Disconnect from this database", null, btnDisconnect_Click) { Enabled = connection.IsOpened });
                 menu.Items.Insert(insertIndex++, new ToolStripSeparator());
             }
 

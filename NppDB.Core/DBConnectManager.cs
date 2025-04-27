@@ -109,7 +109,7 @@ namespace NppDB.Core
             }
         }
 
-        public INppDBCommandHost NppCommandHost { get; set; }
+        public INppDbCommandHost NppCommandHost { get; set; }
 
         public IDbConnect CreateConnect(DatabaseType databaseType)
         {

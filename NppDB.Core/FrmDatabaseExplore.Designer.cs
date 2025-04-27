@@ -43,17 +43,10 @@
             // toolStrip1
             // 
             this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.btnRegister,
-            this.btnUnregister,
-            this.toolStripSeparator2,
-            this.btnConnect,
-            this.btnDisconnect,
-            this.toolStripSeparator1,
-            this.btnRefresh});
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.btnRegister, this.btnUnregister, this.toolStripSeparator2, this.btnConnect, this.btnDisconnect, this.toolStripSeparator1, this.btnRefresh });
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(484, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(415, 25);
             this.toolStrip1.TabIndex = 0;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -64,7 +57,7 @@
             this.btnRegister.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnRegister.Name = "btnRegister";
             this.btnRegister.Size = new System.Drawing.Size(23, 22);
-            this.btnRegister.Text = "Register";
+            this.btnRegister.Text = "Add a new database";
             this.btnRegister.Click += new System.EventHandler(this.btnRegister_Click);
             // 
             // btnUnregister
@@ -74,7 +67,7 @@
             this.btnUnregister.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnUnregister.Name = "btnUnregister";
             this.btnUnregister.Size = new System.Drawing.Size(23, 22);
-            this.btnUnregister.Text = "Unregister";
+            this.btnUnregister.Text = "Remove the selected database connection";
             this.btnUnregister.Click += new System.EventHandler(this.btnUnregister_Click);
             // 
             // toolStripSeparator2
@@ -89,7 +82,7 @@
             this.btnConnect.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(23, 22);
-            this.btnConnect.Text = "Connect";
+            this.btnConnect.Text = "Connect to the selected database";
             this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
             // 
             // btnDisconnect
@@ -99,7 +92,7 @@
             this.btnDisconnect.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnDisconnect.Name = "btnDisconnect";
             this.btnDisconnect.Size = new System.Drawing.Size(23, 22);
-            this.btnDisconnect.Text = "Disconnect";
+            this.btnDisconnect.Text = "Disconnect from the selected database";
             this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
             // 
             // toolStripSeparator1
@@ -114,7 +107,7 @@
             this.btnRefresh.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(23, 22);
-            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.Text = "Refresh the selected database connection";
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
             // trvDBList
@@ -123,7 +116,7 @@
             this.trvDBList.Location = new System.Drawing.Point(0, 25);
             this.trvDBList.Name = "trvDBList";
             this.trvDBList.PathSeparator = "!>!";
-            this.trvDBList.Size = new System.Drawing.Size(484, 514);
+            this.trvDBList.Size = new System.Drawing.Size(415, 559);
             this.trvDBList.TabIndex = 1;
             this.trvDBList.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.trvDBList_AfterSelect);
             this.trvDBList.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.trvDBList_NodeMouseClick);
@@ -131,9 +124,9 @@
             // 
             // FrmDatabaseExplore
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(484, 539);
+            this.ClientSize = new System.Drawing.Size(415, 584);
             this.Controls.Add(this.trvDBList);
             this.Controls.Add(this.toolStrip1);
             this.Name = "FrmDatabaseExplore";
@@ -142,7 +135,6 @@
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

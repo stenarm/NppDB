@@ -9,7 +9,7 @@ namespace NppDB //Kbg.NppPluginNET
 {
     static class UnmanagedExports
     {
-        private static readonly NppDBPlugin _plugin = new NppDBPlugin();
+        private static readonly NppDbPlugin _plugin = new NppDbPlugin();
 
         [DllExport(CallingConvention=CallingConvention.Cdecl)]
         static bool isUnicode()

@@ -10,8 +10,6 @@ using System.Linq;
 using System.Reflection;
 using System.Xml;
 using Microsoft.Win32.SafeHandles;
-using System.Diagnostics;
-
 using NppDB.Comm;
 using NppDB.Core;
 using Kbg.NppPluginNET.PluginInfrastructure;
@@ -26,7 +24,7 @@ namespace NppDB
         }
     }
 
-    public class NppDBPlugin : PluginBase, INppDBCommandHost
+    public class NppDbPlugin : PluginBase, INppDbCommandHost
     {
         private const string PluginName = "NppDB";
         private string _nppDbPluginDir;
@@ -47,7 +45,7 @@ namespace NppDB
         /// <summary>
         /// Static constructor to hook up the AssemblyResolve event handler as early as possible.
         /// </summary>
-        static NppDBPlugin()
+        static NppDbPlugin()
         {
             AppDomain.CurrentDomain.AssemblyResolve += FindAssembly;
         }
@@ -57,53 +55,53 @@ namespace NppDB
         /// located in the plugin's directory or other expected locations.
         /// </summary>
         private static Assembly FindAssembly(object sender, ResolveEventArgs args)
-{
-    string logFilePath = Path.Combine(Path.GetTempPath(), "NppDB_ResolveTrace.log");
-
-    try
-    {
-        File.AppendAllText(logFilePath, $"{DateTime.Now}: Trying to resolve '{args.Name}' requested by '{args.RequestingAssembly?.FullName ?? "Unknown"}'.\r\n");
-
-        var requestedAssemblyName = new AssemblyName(args.Name);
-        string pluginDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-        string assemblyPath = Path.Combine(pluginDirectory, requestedAssemblyName.Name + ".dll");
-
-        File.AppendAllText(logFilePath, $"{DateTime.Now}: Looking for '{assemblyPath}'.\r\n");
-
-        if (File.Exists(assemblyPath))
         {
-            File.AppendAllText(logFilePath, $"{DateTime.Now}: Found at '{assemblyPath}'. Loading...\r\n");
-            Assembly loadedAssembly = Assembly.LoadFrom(assemblyPath);
-            File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
-            return loadedAssembly;
-        }
+            string logFilePath = Path.Combine(Path.GetTempPath(), "NppDB_ResolveTrace.log");
 
-        if (requestedAssemblyName.Name.Equals("NppDB.Comm", StringComparison.OrdinalIgnoreCase))
-        {
-            File.AppendAllText(logFilePath, $"{DateTime.Now}: '{requestedAssemblyName.Name}.dll' not found in plugin dir. Checking N++ base dir...\r\n");
-            string nppBaseDirectory = Path.GetFullPath(Path.Combine(pluginDirectory, "..", ".."));
-            string commPathInBase = Path.Combine(nppBaseDirectory, "NppDB.Comm.dll");
-            if (File.Exists(commPathInBase))
+            try
             {
-                File.AppendAllText(logFilePath, $"{DateTime.Now}: Found NppDB.Comm.dll at '{commPathInBase}'. Loading...\r\n");
-                Assembly loadedAssembly = Assembly.LoadFrom(commPathInBase);
-                File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
-                return loadedAssembly;
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: Trying to resolve '{args.Name}' requested by '{args.RequestingAssembly?.FullName ?? "Unknown"}'.\r\n");
+
+                var requestedAssemblyName = new AssemblyName(args.Name);
+                string pluginDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string assemblyPath = Path.Combine(pluginDirectory, requestedAssemblyName.Name + ".dll");
+
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: Looking for '{assemblyPath}'.\r\n");
+
+                if (File.Exists(assemblyPath))
+                {
+                    File.AppendAllText(logFilePath, $"{DateTime.Now}: Found at '{assemblyPath}'. Loading...\r\n");
+                    Assembly loadedAssembly = Assembly.LoadFrom(assemblyPath);
+                    File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
+                    return loadedAssembly;
+                }
+
+                if (requestedAssemblyName.Name.Equals("NppDB.Comm", StringComparison.OrdinalIgnoreCase))
+                {
+                    File.AppendAllText(logFilePath, $"{DateTime.Now}: '{requestedAssemblyName.Name}.dll' not found in plugin dir. Checking N++ base dir...\r\n");
+                    string nppBaseDirectory = Path.GetFullPath(Path.Combine(pluginDirectory, "..", ".."));
+                    string commPathInBase = Path.Combine(nppBaseDirectory, "NppDB.Comm.dll");
+                    if (File.Exists(commPathInBase))
+                    {
+                        File.AppendAllText(logFilePath, $"{DateTime.Now}: Found NppDB.Comm.dll at '{commPathInBase}'. Loading...\r\n");
+                        Assembly loadedAssembly = Assembly.LoadFrom(commPathInBase);
+                        File.AppendAllText(logFilePath, $"{DateTime.Now}: Successfully loaded '{loadedAssembly.FullName}'.\r\n");
+                        return loadedAssembly;
+                    }
+
+                    File.AppendAllText(logFilePath, $"{DateTime.Now}: NppDB.Comm.dll NOT found at '{commPathInBase}'.\r\n");
+                } else {
+                    File.AppendAllText(logFilePath, $"{DateTime.Now}: '{assemblyPath}' does not exist.\r\n");
+                }
+            }
+            catch (Exception ex)
+            {
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: EXCEPTION in FindAssembly resolving '{args.Name}': {ex}\r\n");
             }
 
-            File.AppendAllText(logFilePath, $"{DateTime.Now}: NppDB.Comm.dll NOT found at '{commPathInBase}'.\r\n");
-        } else {
-            File.AppendAllText(logFilePath, $"{DateTime.Now}: '{assemblyPath}' does not exist.\r\n");
+            File.AppendAllText(logFilePath, $"{DateTime.Now}: Failed to resolve '{args.Name}'. Returning null.\r\n");
+            return null;
         }
-    }
-    catch (Exception ex)
-    {
-        File.AppendAllText(logFilePath, $"{DateTime.Now}: EXCEPTION in FindAssembly resolving '{args.Name}': {ex}\r\n");
-    }
-
-    File.AppendAllText(logFilePath, $"{DateTime.Now}: Failed to resolve '{args.Name}'. Returning null.\r\n");
-    return null;
-}
 
 
         #region plugin interface
@@ -828,7 +826,7 @@ Please select ""Attach"" from database context menu.");
             SetResultPos(_currentCtr);
         }
 
-        private Control AddSQLResult(IntPtr bufID, IDbConnect connect, ISQLExecutor sqlExecutor)
+        private Control AddSQLResult(IntPtr bufID, IDbConnect connect, ISqlExecutor sqlExecutor)
         {
             var ctr = SQLResultManager.Instance.CreateSQLResult(bufID, connect, sqlExecutor);
             ctr.Height = _defaultSQLResultHeight;
@@ -1070,7 +1068,7 @@ Please select ""Attach"" from database context menu.");
                         NewFile();
                         break;
                     case NppDBCommandType.CreateResultView:
-                        return AddSQLResult((IntPtr)parameters[0], (IDbConnect)parameters[1], (ISQLExecutor)parameters[2]);
+                        return AddSQLResult((IntPtr)parameters[0], (IDbConnect)parameters[1], (ISqlExecutor)parameters[2]);
                     case NppDBCommandType.DestroyResultView:
                         CloseCurrentSQLResult();
                         break;

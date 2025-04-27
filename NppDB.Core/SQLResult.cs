@@ -13,7 +13,7 @@ namespace NppDB.Core
         private static readonly List<WeakReference<SqlResult>> ActiveInstances = new List<WeakReference<SqlResult>>();
         private static readonly object ListLock = new object();
 
-        public SqlResult(IDbConnect connect, ISQLExecutor sqlExecutor)
+        public SqlResult(IDbConnect connect, ISqlExecutor sqlExecutor)
         {
             InitializeComponent();
             Init();
@@ -270,8 +270,8 @@ namespace NppDB.Core
 
         public IDbConnect LinkedDbConnect { get; private set; }
 
-        private ISQLExecutor _exec;
-        private void SetConnect(IDbConnect connect, ISQLExecutor sqlExecutor)
+        private ISqlExecutor _exec;
+        private void SetConnect(IDbConnect connect, ISqlExecutor sqlExecutor)
         {
             if (_exec == null)
             {
@@ -279,7 +279,7 @@ namespace NppDB.Core
             }
             LinkedDbConnect = connect;
             lblConnect.Text = $@"{connect.DatabaseSystemName}: {connect.Title}";
-            lblAccount.Text = connect.Account;
+            lblAccount.Text = $@"Username: {connect.Account}";
             lblElapsed.Text = "";
             btnStop.Enabled = false;
         }

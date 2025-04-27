@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace NppDB.Comm
 {
-    public interface ISQLExecutor
+    public interface ISqlExecutor
     {
         bool CanExecute();
         void Execute(IList<string> sqlQueries, Action<IList<CommandResult>> callback);

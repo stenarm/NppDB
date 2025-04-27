@@ -8,7 +8,7 @@ namespace NppDB.Core
     public class SQLResultManager
     {
         private Dictionary<IntPtr, SqlResult> _bind = new Dictionary<IntPtr, SqlResult>();
-        public SqlResult CreateSQLResult(IntPtr id, IDbConnect connect, ISQLExecutor sqlExecutor)
+        public SqlResult CreateSQLResult(IntPtr id, IDbConnect connect, ISqlExecutor sqlExecutor)
         {
             if (_bind.ContainsKey(id)) 
                 throw new ApplicationException("A database connection is already attached to the current document.");

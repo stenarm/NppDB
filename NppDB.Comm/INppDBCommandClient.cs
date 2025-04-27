@@ -2,6 +2,6 @@
 {
     public interface INppDBCommandClient
     {
-        void SetCommandHost(INppDBCommandHost host);
+        void SetCommandHost(INppDbCommandHost host);
     }
 }

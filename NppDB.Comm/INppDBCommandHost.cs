@@ -1,6 +1,6 @@
 ﻿namespace NppDB.Comm
 {
-    public interface INppDBCommandHost
+    public interface INppDbCommandHost
     {
         object Execute(NppDBCommandType type, object[] parameters);
     }
