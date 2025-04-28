@@ -279,7 +279,18 @@ namespace NppDB.Core
             }
             LinkedDbConnect = connect;
             lblConnect.Text = $@"{connect.DatabaseSystemName}: {connect.Title}";
-            lblAccount.Text = $@"Username: {connect.Account}";
+            
+            if (connect.DatabaseSystemName != null && connect.DatabaseSystemName.StartsWith("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+            {
+                lblAccount.Text = $@"Username: {connect.Account}";
+                lblAccount.Visible = !string.IsNullOrEmpty(connect.Account);
+            }
+            else
+            {
+                lblAccount.Text = "";
+                lblAccount.Visible = false;
+            }
+            
             lblElapsed.Text = "";
             btnStop.Enabled = false;
         }

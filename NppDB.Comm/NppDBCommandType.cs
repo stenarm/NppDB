@@ -1,6 +1,6 @@
 ﻿namespace NppDB.Comm
 {
-    public enum NppDBCommandType
+    public enum NppDbCommandType
     {
         NewFile,
         CreateResultView,

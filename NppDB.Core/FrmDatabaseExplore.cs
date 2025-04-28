@@ -108,7 +108,7 @@ namespace NppDB.Core
             }
             catch (Exception exCheckLogin)
             {
-                MessageBox.Show($"RegisterConnect: UNEXPECTED ERROR during CheckLogin call: {exCheckLogin.Message}", "Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"RegisterConnect: UNEXPECTED ERROR during CheckLogin call: {exCheckLogin.Message}", @"Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 checkLoginResult = false;
             }
 
@@ -142,7 +142,7 @@ namespace NppDB.Core
             }
             catch (Exception exConnect)
             {
-                MessageBox.Show($"RegisterConnect: ERROR during Connect/Attach/Refresh: {exConnect.Message}" + (exConnect.InnerException != null ? " Inner: " + exConnect.InnerException.Message : ""), "Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"RegisterConnect: ERROR during Connect/Attach/Refresh: {exConnect.Message}" + (exConnect.InnerException != null ? " Inner: " + exConnect.InnerException.Message : ""), @"Debug RegisterConnect Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -174,6 +174,7 @@ namespace NppDB.Core
             if (!(trvDBList.SelectedNode is IDbConnect connection) || trvDBList.SelectedNode.Level > 0) return;
 
             DisconnectHandler?.Invoke(connection);
+            trvDBList.SelectedNode?.Nodes.Clear();
         }
 
         private void btnUnregister_Click(object sender, EventArgs e)

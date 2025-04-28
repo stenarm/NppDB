@@ -1,18 +1,22 @@
 using System;
-using System.IO;
-using System.Text;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Drawing.Imaging;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Forms;
 using System.Xml;
+using Kbg.NppPluginNET.PluginInfrastructure;
 using Microsoft.Win32.SafeHandles;
 using NppDB.Comm;
 using NppDB.Core;
+using NppDB.Properties;
 using Kbg.NppPluginNET.PluginInfrastructure;
+using System;
+using System.Windows.Forms;
 
 namespace NppDB
 {
@@ -35,7 +39,7 @@ namespace NppDB
         private string _translationsConfigPath;
         private FrmDatabaseExplore _frmDBExplorer;
         private int _cmdFrmDBExplorerIdx = -1;
-        private Bitmap _imgMan = Properties.Resources.DBPPManage16;
+        private Bitmap _imgMan = Resources.DBPPManage16;
         private Icon tbIcon;
         private readonly Func<IScintillaGateway> GetCurrentEditor = GetGatewayFactory();
         private IList<string> editorErrors = new List<string>();
@@ -431,7 +435,7 @@ namespace NppDB
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show("finalize plugin : "+ ex.Message);
+                MessageBox.Show("finalize plugin : "+ ex.Message);
             }
         }
         #endregion
@@ -687,6 +691,11 @@ Please select ""Attach"" from database context menu.");
             editor.IndicatorClearRange(0, textLength);
             editorErrors.Clear();
         }
+        
+        public void SendNppMessage(uint msg, IntPtr wParam, int lParam)
+        {
+            Win32.SendMessage(nppData._nppHandle, msg, wParam, lParam);
+        }
 
         private void Execute()
         {
@@ -808,7 +817,7 @@ Please select ""Attach"" from database context menu.");
 
         #endregion
 
-        private Control _currentCtr = null;
+        private Control _currentCtr;
         internal void UpdateCurrentSQLResult()
         {
             if (SQLResultManager.Instance.Count == 0) return;
@@ -839,11 +848,11 @@ Please select ""Attach"" from database context menu.");
             return ctr;
         }
 
-        bool isDrag = false;
-        Control hSplitBar = null;
+        bool isDrag;
+        Control hSplitBar;
         private Control CreateSplitBar()
         {
-            var bar = new PictureBox() { Left = 0, Top = 300, Width = 400, Height = 6, Cursor = Cursors.SizeNS, Visible = false };
+            var bar = new PictureBox { Left = 0, Top = 300, Width = 400, Height = 6, Cursor = Cursors.SizeNS, Visible = false };
             Win32.SetParent(bar.Handle, nppData._nppHandle);
             bar.BringToFront();
 
@@ -1052,32 +1061,32 @@ Please select ""Attach"" from database context menu.");
             }
         }
 
-        public object Execute(NppDBCommandType type, object[] parameters)
+        public object Execute(NppDbCommandType type, object[] parameters)
         {
             try
             {
                 switch (type)
                 {
-                    case NppDBCommandType.ActivateBuffer:
+                    case NppDbCommandType.ActivateBuffer:
                         ActivateBufferId((int)parameters[0]);
                         break;
-                    case NppDBCommandType.AppendToCurrentView:
+                    case NppDbCommandType.AppendToCurrentView:
                         AppendToScintillaText(GetCurrentScintilla(), (string)parameters[0]);
                         break;
-                    case NppDBCommandType.NewFile:
+                    case NppDbCommandType.NewFile:
                         NewFile();
                         break;
-                    case NppDBCommandType.CreateResultView:
+                    case NppDbCommandType.CreateResultView:
                         return AddSQLResult((IntPtr)parameters[0], (IDbConnect)parameters[1], (ISqlExecutor)parameters[2]);
-                    case NppDBCommandType.DestroyResultView:
+                    case NppDbCommandType.DestroyResultView:
                         CloseCurrentSQLResult();
                         break;
-                    case NppDBCommandType.ExecuteSQL:
+                    case NppDbCommandType.ExecuteSQL:
                         ExecuteSQL((IntPtr)parameters[0], (string)parameters[1]);
                         break;
-                    case NppDBCommandType.GetAttachedBufferID:
+                    case NppDbCommandType.GetAttachedBufferID:
                         return GetCurrentAttachedBufferId();
-                    case NppDBCommandType.GetActivatedBufferID:
+                    case NppDbCommandType.GetActivatedBufferID:
                         return GetCurrentBufferId();
                     default:
                         return null;
