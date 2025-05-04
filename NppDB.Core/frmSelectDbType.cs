@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using NppDB;
-using NppDB.Comm;
 
 namespace NppDB.Core
 {
@@ -28,20 +21,20 @@ namespace NppDB.Core
         {
             get
             {
-                if (this.DialogResult != System.Windows.Forms.DialogResult.OK) return null;
-                else return (DatabaseType)cbxDbTypes.SelectedItem;
+                if (DialogResult != DialogResult.OK) return null;
+                return (DatabaseType)cbxDbTypes.SelectedItem;
             }
         }
         private void btnOK_Click(object sender, EventArgs e)
         {
-            this.DialogResult =  System.Windows.Forms.DialogResult.OK;
-            this.Close();
+            DialogResult =  DialogResult.OK;
+            Close();
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.DialogResult =  System.Windows.Forms.DialogResult.Cancel;
-            this.Close();
+            DialogResult =  DialogResult.Cancel;
+            Close();
         }
 
         private void frmSelectDbType_FormClosed(object sender, FormClosedEventArgs e)

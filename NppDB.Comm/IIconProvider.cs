@@ -1,7 +1,9 @@
-﻿namespace NppDB.Comm
+﻿using System.Drawing;
+
+namespace NppDB.Comm
 {
     public interface IIconProvider
     {
-        System.Drawing.Bitmap GetIcon();
+        Bitmap GetIcon();
     }
 }

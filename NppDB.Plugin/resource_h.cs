@@ -4,6 +4,7 @@
 // "notepad-plus-plus/scintilla/include/Scintilla.iface"
 // found at
 // https://github.com/notepad-plus-plus/notepad-plus-plus/blob/master/scintilla/include/Scintilla.iface
+
 using Kbg.NppPluginNET.PluginInfrastructure;
 
 namespace NppPluginNET.PluginInfrastructure

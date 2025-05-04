@@ -14,9 +14,6 @@ using Microsoft.Win32.SafeHandles;
 using NppDB.Comm;
 using NppDB.Core;
 using NppDB.Properties;
-using Kbg.NppPluginNET.PluginInfrastructure;
-using System;
-using System.Windows.Forms;
 
 namespace NppDB
 {

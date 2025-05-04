@@ -1,4 +1,5 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -153,7 +154,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, NppMenuCmd lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), new IntPtr((uint)lParam));
+            return SendMessage(hWnd, Msg, new IntPtr(wParam), new IntPtr((uint)lParam));
         }
 
         /// <summary>
@@ -164,7 +165,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, IntPtr lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -175,7 +176,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, int lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), new IntPtr(lParam));
+            return SendMessage(hWnd, Msg, new IntPtr(wParam), new IntPtr(lParam));
         }
 
         /// <summary>
@@ -187,7 +188,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, out int lParam)
         {
             IntPtr outVal;
-            IntPtr retval = SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), out outVal);
+            IntPtr retval = SendMessage(hWnd, Msg, new IntPtr(wParam), out outVal);
             lParam = outVal.ToInt32();
             return retval;
         }
@@ -200,7 +201,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, int lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, wParam, new IntPtr(lParam));
+            return SendMessage(hWnd, Msg, wParam, new IntPtr(lParam));
         }
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -222,7 +223,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// </summary>
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -300,7 +301,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, ref LangType lParam)
         {
             IntPtr outVal;
-            IntPtr retval = SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), out outVal);
+            IntPtr retval = SendMessage(hWnd, Msg, new IntPtr(wParam), out outVal);
             lParam = (LangType)outVal;
             return retval;
         }

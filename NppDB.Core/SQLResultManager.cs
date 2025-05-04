@@ -34,7 +34,7 @@ namespace NppDB.Core
             }
         }
 
-        private static SQLResultManager _inst = null;
+        private static SQLResultManager _inst;
         public static SQLResultManager Instance
         {
             get

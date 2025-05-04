@@ -1,11 +1,14 @@
-﻿namespace NppDB.Core
+﻿using System.ComponentModel;
+using System.Windows.Forms;
+
+namespace NppDB.Core
 {
     partial class FrmDatabaseExplore
     {
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        private IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -160,14 +163,14 @@
 
         #endregion
 
-        private System.Windows.Forms.ToolStrip toolStrip1;
-        private System.Windows.Forms.ToolStripButton btnConnect;
-        private System.Windows.Forms.ToolStripButton btnDisconnect;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripButton btnRefresh;
-        private System.Windows.Forms.TreeView trvDBList;
-        private System.Windows.Forms.ToolStripButton btnRegister;
-        private System.Windows.Forms.ToolStripButton btnUnregister;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private ToolStrip toolStrip1;
+        private ToolStripButton btnConnect;
+        private ToolStripButton btnDisconnect;
+        private ToolStripSeparator toolStripSeparator1;
+        private ToolStripButton btnRefresh;
+        private TreeView trvDBList;
+        private ToolStripButton btnRegister;
+        private ToolStripButton btnUnregister;
+        private ToolStripSeparator toolStripSeparator2;
     }
 }

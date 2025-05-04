@@ -5,6 +5,8 @@ using System.Data;
 using System.Drawing;
 using System.Windows.Forms;
 using NppDB.Comm;
+using NppDB.Core.Properties;
+using NppDB.PostgreSQL;
 
 namespace NppDB.Core
 {
@@ -164,11 +166,11 @@ namespace NppDB.Core
                     var drawnIconHeight = 8;
                     Image buttonImage;
                     if (e.Index == 0) {
-                        buttonImage = Properties.Resources.gui_eraser1;
+                        buttonImage = Resources.gui_eraser1;
                         drawnIconWidth = 16;
                         drawnIconHeight = 16;
                     } else {
-                        buttonImage = Properties.Resources.x_letter1;
+                        buttonImage = Resources.x_letter1;
                     }
 
 
@@ -278,19 +280,35 @@ namespace NppDB.Core
                 _exec = sqlExecutor;
             }
             LinkedDbConnect = connect;
+
             lblConnect.Text = $@"{connect.DatabaseSystemName}: {connect.Title}";
-            
+
             if (connect.DatabaseSystemName != null && connect.DatabaseSystemName.StartsWith("PostgreSQL", StringComparison.OrdinalIgnoreCase))
             {
-                lblAccount.Text = $@"Username: {connect.Account}";
+                lblAccount.Text = $"Username: {connect.Account}";
                 lblAccount.Visible = !string.IsNullOrEmpty(connect.Account);
+                sepAccount.Visible = lblAccount.Visible;
             }
             else
             {
                 lblAccount.Text = "";
                 lblAccount.Visible = false;
+                sepAccount.Visible = false;
             }
-            
+
+            if (connect is PostgreSqlConnect pgConnect)
+            {
+                lblDatabase.Text = $"Database: {pgConnect.Database}";
+                lblDatabase.Visible = !string.IsNullOrEmpty(pgConnect.Database);
+                sepDatabase.Visible = lblDatabase.Visible;
+            }
+            else
+            {
+                lblDatabase.Text = "";
+                lblDatabase.Visible = false;
+                sepDatabase.Visible = false;
+            }
+
             lblElapsed.Text = "";
             btnStop.Enabled = false;
         }

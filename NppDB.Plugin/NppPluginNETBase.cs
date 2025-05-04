@@ -1,4 +1,5 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
@@ -29,7 +30,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             funcItem._cmdID = index;
             funcItem._itemName = commandName;
             if (functionPointer != null)
-                funcItem._pFunc = new NppFuncItemDelegate(functionPointer);
+                funcItem._pFunc = functionPointer;
             if (shortcut._key != 0)
                 funcItem._pShKey = shortcut;
             funcItem._init2Check = checkOnInit;

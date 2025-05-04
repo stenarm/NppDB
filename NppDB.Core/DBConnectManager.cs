@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
-using System.Reflection;
-using System.Windows.Forms;
-using NppDB;
 using NppDB.Comm;
 
 namespace NppDB.Core
@@ -38,15 +37,15 @@ namespace NppDB.Core
 
         public void Refresh()
         {
-            _dbConnects.AsParallel().ForAll((x) =>{try { x.Refresh(); } catch { }});
+            _dbConnects.AsParallel().ForAll(x =>{try { x.Refresh(); } catch { }});
         }
 
         public IEnumerable<IDbConnect> Connections { get { return _dbConnects; } }
 
         public void SaveToXml(string path)
         {
-            var dir = System.IO.Path.GetDirectoryName(path);
-            if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(path);
+            var dir = Path.GetDirectoryName(path);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(path);
 
             XmlDocument xdoc = new XmlDocument();
             XmlNode xconnects = xdoc.CreateElement("connects");
@@ -157,7 +156,7 @@ Error: {e}");
             }
         }
 
-        private static DBServerManager _svrMan = null;
+        private static DBServerManager _svrMan;
         public static DBServerManager Instance
         {
             get

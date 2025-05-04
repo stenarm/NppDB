@@ -1,14 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Windows.Forms;
-using NppDB;
-using NppDB.Comm;
 
 namespace NppDB.Core
 {
@@ -26,7 +19,7 @@ namespace NppDB.Core
 
         private void frmAbout_Load(object sender, EventArgs e)
         {
-            lblVer.Text = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            lblVer.Text = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -11,7 +12,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     {
         IntPtr _nativeArray;
         List<IntPtr> _nativeItems;
-        bool _disposed = false;
+        bool _disposed;
 
         public ClikeStringArray(int num, int stringCapacity)
         {
@@ -66,7 +67,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             }
             catch (Exception e)
             {
-                MessageBox.Show(MethodBase.GetCurrentMethod().ToString() +": "+ e.Message, this.GetType().Name);
+                MessageBox.Show(MethodBase.GetCurrentMethod() +": "+ e.Message, GetType().Name);
             }
         }
         ~ClikeStringArray()

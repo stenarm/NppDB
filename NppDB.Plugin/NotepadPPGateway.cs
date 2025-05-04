@@ -1,4 +1,5 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -16,7 +17,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		string GetNppPath();
 		string GetPluginConfigPath();
 		string GetCurrentFilePath();
-		unsafe string GetFilePath(int bufferId);
+		string GetFilePath(int bufferId);
 		void SetCurrentLanguage(LangType language);
 		bool OpenFile(string path);
 	}
@@ -108,7 +109,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 		/// <summary>
 		/// Gets the path of the current document.
 		/// </summary>
-		public unsafe string GetFilePath(int bufferId)
+		public string GetFilePath(int bufferId)
 		{
 			var path = new StringBuilder(2000);
 			Win32.SendMessage(PluginBase.nppData._nppHandle, (uint) NppMsg.NPPM_GETFULLPATHFROMBUFFERID, bufferId, path);

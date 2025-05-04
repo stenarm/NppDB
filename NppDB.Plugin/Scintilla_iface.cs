@@ -3212,7 +3212,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     {
         Sci_TextToFind _sciTextToFind;
         IntPtr _ptrSciTextToFind;
-        bool _disposed = false;
+        bool _disposed;
 
         /// <summary>
         /// text to find

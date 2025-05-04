@@ -1,5 +1,7 @@
 ﻿// In INppDBCommandHost.cs
+
 using System;
+
 namespace NppDB.Comm
 {
     public interface INppDbCommandHost

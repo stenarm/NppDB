@@ -1,4 +1,5 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
 using System.Runtime.InteropServices;
 
@@ -143,7 +144,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
-            if (obj.GetType() != this.GetType()) return false;
+            if (obj.GetType() != GetType()) return false;
             return Equals((Position)obj);
         }
 
@@ -211,7 +212,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
     {
         Sci_TextRange _sciTextRange;
         IntPtr _ptrSciTextRange;
-        bool _disposed = false;
+        bool _disposed;
 
         public TextRange(CharacterRange chrRange, int stringCapacity)
         {

@@ -1,12 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
-using System.IO;
-using NppDB;
-using NppDB.Comm;
 
 namespace NppDB.Core
 {
@@ -17,7 +14,7 @@ namespace NppDB.Core
 
         private Options()
         {
-            _opts["forcetrans"] = new Option() { Name = "forcetrans", Value = false };
+            _opts["forcetrans"] = new Option { Name = "forcetrans", Value = false };
         }
 
         public Option this[string name]
@@ -46,27 +43,19 @@ namespace NppDB.Core
 
         public void SaveToXml(string path)
         {
-            try
+            using (var fw = File.Open(path, FileMode.Create))
             {
-                using (var fw = File.Open(path, FileMode.Create))
+                XmlSerializer xs = null;
+                try
                 {
-                    XmlSerializer xs = null;
-                    try
-                    {
-                        xs = new XmlSerializer(typeof(Options));
-                        xs.Serialize(fw, this);
-                    }
-                    catch { throw; }
-                    finally
-                    {
-                        fw.Flush();
-                        fw.Close();
-                    }
+                    xs = new XmlSerializer(typeof(Options));
+                    xs.Serialize(fw, this);
                 }
-            }
-            catch
-            {
-                throw;
+                finally
+                {
+                    fw.Flush();
+                    fw.Close();
+                }
             }
         }
 
@@ -106,12 +95,12 @@ namespace NppDB.Core
             return _opts.Values.GetEnumerator(); 
         }
 
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
-            return this.GetEnumerator();
+            return GetEnumerator();
         }
 
-        private static Options _options = null;
+        private static Options _options;
         public static Options Instance
         {
             get

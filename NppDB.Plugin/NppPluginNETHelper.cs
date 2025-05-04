@@ -1,9 +1,10 @@
 ﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
+
 using System;
-using System.Text;
-using System.Windows.Forms;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Forms;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {
@@ -51,7 +52,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         int _sizeFuncItem;
         List<IntPtr> _shortCutKeys;
         IntPtr _nativePointer;
-        bool _disposed = false;
+        bool _disposed;
 
         public FuncItems()
         {

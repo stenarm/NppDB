@@ -1,11 +1,14 @@
-﻿namespace NppDB.Core
+﻿using System.ComponentModel;
+using System.Windows.Forms;
+
+namespace NppDB.Core
 {
     partial class frmSelectDbType
     {
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+        private IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -89,8 +92,8 @@
 
         #endregion
 
-        private System.Windows.Forms.ComboBox cbxDbTypes;
-        private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Button btnCancel;
+        private ComboBox cbxDbTypes;
+        private Button btnOK;
+        private Button btnCancel;
     }
 }
