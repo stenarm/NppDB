@@ -36,6 +36,8 @@
             this.btnDisconnect = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.btnRefresh = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.shortcuts = new System.Windows.Forms.ToolStripButton();
             this.trvDBList = new System.Windows.Forms.TreeView();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -43,7 +45,7 @@
             // toolStrip1
             // 
             this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.btnRegister, this.btnUnregister, this.toolStripSeparator2, this.btnConnect, this.btnDisconnect, this.toolStripSeparator1, this.btnRefresh });
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { this.btnRegister, this.btnUnregister, this.toolStripSeparator2, this.btnConnect, this.btnDisconnect, this.toolStripSeparator1, this.btnRefresh, this.toolStripSeparator3, this.shortcuts });
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(415, 25);
@@ -110,6 +112,21 @@
             this.btnRefresh.Text = "Refresh the selected database connection";
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
+            // 
+            // shortcuts
+            // 
+            this.shortcuts.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.shortcuts.Image = global::NppDB.Core.Properties.Resources.shortcuts6;
+            this.shortcuts.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.shortcuts.Name = "shortcuts";
+            this.shortcuts.Size = new System.Drawing.Size(23, 22);
+            this.shortcuts.Text = "Show plugin shortcuts";
+            this.shortcuts.Click += new System.EventHandler(this.shortcuts_Click);
+            // 
             // trvDBList
             // 
             this.trvDBList.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -136,6 +153,10 @@
             this.ResumeLayout(false);
             this.PerformLayout();
         }
+
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+
+        private System.Windows.Forms.ToolStripButton shortcuts;
 
         #endregion
 

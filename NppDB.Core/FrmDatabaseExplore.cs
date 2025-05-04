@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using NppDB.Comm;
 using NppDB.Core.Properties;
@@ -65,6 +66,7 @@ namespace NppDB.Core
                 trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
             
             trvDBList.ShowNodeToolTips = true;
+            trvDBList.BeforeExpand += trvDBList_BeforeExpand;
         }
 
         private readonly List<NotifyHandler> _notifyHandlers = new List<NotifyHandler>();
@@ -190,6 +192,34 @@ namespace NppDB.Core
 
             UnregisterHandler?.Invoke(connection);
         }
+        
+        private void trvDBList_BeforeExpand(object sender, TreeViewCancelEventArgs e)
+        {
+            if (e.Node.Nodes.Count != 1 || !string.IsNullOrEmpty(e.Node.Nodes[0].Text)) return;
+            if (e.Node is IRefreshable refreshableNode)
+            {
+                Cursor = Cursors.WaitCursor;
+                trvDBList.Cursor = Cursors.WaitCursor;
+                try
+                {
+                    refreshableNode.Refresh();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error expanding node '{e.Node.Text}':\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    e.Cancel = true;
+                }
+                finally
+                {
+                    Cursor = Cursors.Default;
+                    trvDBList.Cursor = Cursors.Default;
+                }
+            }
+            else
+            {
+                e.Node.Nodes.Clear();
+            }
+        }
 
         public delegate void DatabaseEventHandler(IDbConnect connection);
 
@@ -309,6 +339,23 @@ namespace NppDB.Core
             {
                 MessageBox.Show(this, "The selected item is not a PostgreSQL connection.", "Cannot Edit Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+        private void shortcuts_Click(object sender, EventArgs e)
+        {
+            var shortcutText = new StringBuilder();
+            shortcutText.AppendLine("NppDB Shortcuts:");
+            shortcutText.AppendLine("--------------------------------------------");
+            shortcutText.AppendLine("Execute SQL:                                 F9");
+            shortcutText.AppendLine("");
+            shortcutText.AppendLine("Analyze SQL:                       Shift+F9");
+            shortcutText.AppendLine("");
+            shortcutText.AppendLine("Clear Analysis:           Ctrl+Shift+F9");
+            shortcutText.AppendLine("");
+            shortcutText.AppendLine("DB Connect Manager:               F10");
+
+            MessageBox.Show(
+                this, shortcutText.ToString(), "NppDB Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

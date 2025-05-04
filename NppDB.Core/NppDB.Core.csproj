@@ -204,7 +204,18 @@
   <ItemGroup><None Include="Resources\column-1110.png" /></ItemGroup>
   <ItemGroup><None Include="Resources\column-1111.png" /></ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\arrow.png" />
     <Content Include="Resources\gui_eraser1.png" />
+    <Content Include="Resources\keyboard1.png" />
+    <Content Include="Resources\keyboard11.png" />
+    <Content Include="Resources\shortcut.png" />
+    <Content Include="Resources\shortcuts.png" />
+    <Content Include="Resources\shortcuts1.png" />
+    <Content Include="Resources\shortcuts2.png" />
+    <Content Include="Resources\shortcuts3.png" />
+    <Content Include="Resources\shortcuts4.png" />
+    <Content Include="Resources\shortcuts5.png" />
+    <Content Include="Resources\shortcuts6.png" />
     <Content Include="Resources\x_letter1.png" />
   </ItemGroup>
   
