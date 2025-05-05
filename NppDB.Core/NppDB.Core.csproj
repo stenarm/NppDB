@@ -89,6 +89,12 @@
     <Compile Include="frmSelectDbType.Designer.cs">
       <DependentUpon>frmSelectDbType.cs</DependentUpon>
     </Compile>
+    <Compile Include="FrmSelectSqlDialect.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmSelectSqlDialect.Designer.cs">
+      <DependentUpon>FrmSelectSqlDialect.cs</DependentUpon>
+    </Compile>
     <Compile Include="NotifyHandler.cs" />
     <Compile Include="Option.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -113,6 +119,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="frmSelectDbType.resx">
       <DependentUpon>frmSelectDbType.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmSelectSqlDialect.resx">
+      <DependentUpon>FrmSelectSqlDialect.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

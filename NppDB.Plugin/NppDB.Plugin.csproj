@@ -84,6 +84,9 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="Npgsql">
+          <HintPath>..\packages\Npgsql.7.0.6\lib\netstandard2.0\Npgsql.dll</HintPath>
+        </Reference>
         <Reference Include="PresentationCore" />
         <Reference Include="PresentationFramework" />
         <Reference Include="System" />
@@ -139,6 +142,14 @@
         <ProjectReference Include="..\NppDB.Core\NppDB.Core.csproj">
             <Project>{1076df45-b027-435b-b7ec-45637ffef66c}</Project>
             <Name>NppDB.Core</Name>
+        </ProjectReference>
+        <ProjectReference Include="..\NppDB.MSAccess\NppDB.MSAccess.csproj">
+          <Project>{90a00b09-4f04-4f10-aa47-333c633fcd4b}</Project>
+          <Name>NppDB.MSAccess</Name>
+        </ProjectReference>
+        <ProjectReference Include="..\NppDB.PostgreSQL\NppDB.PostgreSQL.csproj">
+          <Project>{54bf6d02-bef9-4c4f-b439-eb3bb87566af}</Project>
+          <Name>NppDB.PostgreSQL</Name>
         </ProjectReference>
     </ItemGroup>
     <ItemGroup>

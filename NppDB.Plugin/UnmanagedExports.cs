@@ -14,25 +14,25 @@ namespace NppDB //Kbg.NppPluginNET
         [DllExport(CallingConvention=CallingConvention.Cdecl)]
         static bool isUnicode()
         {
-            return _plugin.isUnicode();
+            return NppDbPlugin.IsUnicode();
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static void setInfo(NppData notepadPlusData)
         {
-            _plugin.setInfo(notepadPlusData);
+            _plugin.SetInfo(notepadPlusData);
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static IntPtr getFuncsArray(ref int nbF)
         {
-            return _plugin.getFuncsArray(ref nbF);
+            return NppDbPlugin.GetFuncsArray(ref nbF);
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static uint messageProc(uint message, UIntPtr wParam, IntPtr lParam)
         {
-            return Convert.ToUInt32(_plugin.messageProc(message, wParam, lParam));
+            return Convert.ToUInt32(_plugin.MessageProc(message));
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]

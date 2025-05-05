@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Kbg.NppPluginNET.PluginInfrastructure
 {
-    public class Win32
+    public abstract class Win32
     {
         /// <summary>
         /// Get the scroll information of a scroll bar or window with scroll bar
@@ -48,6 +48,19 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             /// </summary>
             public int nTrackPos;
         }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        public struct Rect
+        {
+            public int Left;        // x position of upper-left corner
+            public int Top;         // y position of upper-left corner
+            public int Right;       // x position of lower-right corner
+            public int Bottom;      // y position of lower-right corner
+        }
+        
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetClientRect(IntPtr hWnd, out Rect lpRect);
 
         /// <summary>
         /// Used for the ScrollInfo fMask
@@ -78,36 +91,38 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             SB_CTL = 2,
             SB_BOTH = 3
         }
+        
+        public static readonly IntPtr HwndTop = new IntPtr(0);
 
         [Flags]
         public enum SetWindowPosFlags : uint
         {
-            AsyncWindowPos = 0x4000,
-            DeferErase = 0x2000,
-            DrawFrame = 0x0020,
-            FrameChanged = 0x0020,
-            HideWindow = 0x0080,
-            NoActivate = 0x0010,
-            NoCopyBits = 0x0100,
-            NoMove = 0x0002,
-            NoOwnerZOrder = 0x0200,
-            NoRedraw = 0x0008,
-            NoReposition = 0x0200,
-            NoSendChanging = 0x0400,
-            NoResize = 0x0001,
-            NoZOrder = 0x0004,
-            ShowWindow = 0x0040,
+            ASYNC_WINDOW_POS = 0x4000,
+            DEFER_ERASE = 0x2000,
+            DRAW_FRAME = 0x0020,
+            FRAME_CHANGED = 0x0020,
+            HIDE_WINDOW = 0x0080,
+            NO_ACTIVATE = 0x0010,
+            NO_COPY_BITS = 0x0100,
+            NO_MOVE = 0x0002,
+            NO_OWNER_Z_ORDER = 0x0200,
+            NO_REDRAW = 0x0008,
+            NO_REPOSITION = 0x0200,
+            NO_SEND_CHANGING = 0x0400,
+            NO_RESIZE = 0x0001,
+            NO_Z_ORDER = 0x0004,
+            SHOW_WINDOW = 0x0040,
         }
 
-        public enum WM : uint
+        public enum Wm : uint
         {
-            Move = 0x0003,
-            Size = 0x0005,
-            Moving = 0x0216,
-            EnterSizeMove = 0x0231,
-            ExitSizeMove = 0x0232,
-            Notify = 0x4E,
-            Command = 0x0111,
+            MOVE = 0x0003,
+            SIZE = 0x0005,
+            MOVING = 0x0216,
+            ENTER_SIZE_MOVE = 0x0231,
+            EXIT_SIZE_MOVE = 0x0232,
+            NOTIFY = 0x4E,
+            COMMAND = 0x0111,
         }
 
         /// <summary>
@@ -117,7 +132,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
         [DllImport("user32")]
-        public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
 
         /// <summary>
         /// You should try to avoid calling this method in your plugin code. Rather use one of the gateways such as 
@@ -126,7 +141,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
         [DllImport("user32")]
-        public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lParam);
 
         /// <summary>
         /// You should try to avoid calling this method in your plugin code. Rather use one of the gateways such as 
@@ -135,7 +150,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
         [DllImport("user32")]
-        public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, IntPtr lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
         /// <summary>
         /// You should try to avoid calling this method in your plugin code. Rather use one of the gateways such as 
@@ -144,7 +159,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
         [DllImport("user32")]
-        public static extern IntPtr SendMessage(IntPtr hWnd, UInt32 Msg, IntPtr wParam, out IntPtr lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, out IntPtr lParam);
 
         /// <summary>
         /// You should try to avoid calling this method in your plugin code. Rather use one of the gateways such as 
@@ -152,9 +167,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, NppMenuCmd lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, NppMenuCmd lParam)
         {
-            return SendMessage(hWnd, Msg, new IntPtr(wParam), new IntPtr((uint)lParam));
+            return SendMessage(hWnd, msg, new IntPtr(wParam), new IntPtr((uint)lParam));
         }
 
         /// <summary>
@@ -163,9 +178,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, IntPtr lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, IntPtr lParam)
         {
-            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -174,9 +189,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, int lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, int lParam)
         {
-            return SendMessage(hWnd, Msg, new IntPtr(wParam), new IntPtr(lParam));
+            return SendMessage(hWnd, msg, new IntPtr(wParam), new IntPtr(lParam));
         }
 
         /// <summary>
@@ -185,10 +200,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, out int lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, out int lParam)
         {
-            IntPtr outVal;
-            IntPtr retval = SendMessage(hWnd, Msg, new IntPtr(wParam), out outVal);
+            var retval = SendMessage(hWnd, msg, new IntPtr(wParam), out var outVal);
             lParam = outVal.ToInt32();
             return retval;
         }
@@ -199,9 +213,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, int lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, int lParam)
         {
-            return SendMessage(hWnd, Msg, wParam, new IntPtr(lParam));
+            return SendMessage(hWnd, msg, wParam, new IntPtr(lParam));
         }
 
         /// <summary>
@@ -210,9 +224,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lParam)
         {
-            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -221,9 +235,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam)
         {
-            return SendMessage(hWnd, Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -232,9 +246,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, IntPtr wParam, int lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, IntPtr wParam, int lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, wParam, new IntPtr(lParam));
+            return SendMessage(hWnd, (uint)msg, wParam, new IntPtr(lParam));
         }
 
         /// <summary>
@@ -243,9 +257,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, int wParam, IntPtr lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, int wParam, IntPtr lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, (uint)msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -254,9 +268,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, int wParam, string lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, int wParam, string lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, (uint)msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -265,9 +279,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, int wParam, [MarshalAs(UnmanagedType.LPStr)] StringBuilder lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, int wParam, [MarshalAs(UnmanagedType.LPStr)] StringBuilder lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), lParam);
+            return SendMessage(hWnd, (uint)msg, new IntPtr(wParam), lParam);
         }
 
         /// <summary>
@@ -276,9 +290,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, int wParam, int lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, int wParam, int lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, new IntPtr(wParam), new IntPtr(lParam));
+            return SendMessage(hWnd, (uint)msg, new IntPtr(wParam), new IntPtr(lParam));
         }
 
         /// <summary>
@@ -287,9 +301,9 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project 
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, SciMsg Msg, IntPtr wParam, IntPtr lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, SciMsg msg, IntPtr wParam, IntPtr lParam)
         {
-            return SendMessage(hWnd, (UInt32)Msg, wParam, lParam);
+            return SendMessage(hWnd, (uint)msg, wParam, lParam);
         }
 
         /// <summary>
@@ -298,15 +312,17 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         /// If gateways are missing or incomplete, please help extend them and send your code to the project
         /// at https://github.com/kbilsted/NotepadPlusPlusPluginPack.Net
         /// </summary>
-        public static IntPtr SendMessage(IntPtr hWnd, uint Msg, int wParam, ref LangType lParam)
+        public static IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, ref LangType lParam)
         {
-            IntPtr outVal;
-            IntPtr retval = SendMessage(hWnd, Msg, new IntPtr(wParam), out outVal);
+            var retval = SendMessage(hWnd, msg, new IntPtr(wParam), out var outVal);
             lParam = (LangType)outVal;
             return retval;
         }
+        
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
-        public const int MAX_PATH = 260;
+        public const int MaxPath = 260;
 
         [DllImport("kernel32")]
         public static extern int GetPrivateProfileInt(string lpAppName, string lpKeyName, int nDefault, string lpFileName);
@@ -316,24 +332,26 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 
         [DllImport("kernel32")]
         public static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
+        
+        
 
-        public const int MF_BYCOMMAND = 0;
-        public const int MF_CHECKED = 8;
-        public const int MF_UNCHECKED = 0;
-        public const int MF_ENABLED = 0;
-        public const int MF_GRAYED = 1;
-        public const int MF_DISABLED = 2;
+        public const int MfBycommand = 0;
+        public const int MfChecked = 8;
+        public const int MfUnchecked = 0;
+        public const int MfEnabled = 0;
+        public const int MfGrayed = 1;
+        public const int MfDisabled = 2;
 
         [DllImport("user32")]
         public static extern IntPtr GetMenu(IntPtr hWnd);
 
         [DllImport("user32")]
-        public static extern int CheckMenuItem(IntPtr hMenu, int uIDCheckItem, int uCheck);
+        public static extern int CheckMenuItem(IntPtr hMenu, int uIdCheckItem, int uCheck);
 
         [DllImport("user32")]
-        public static extern bool EnableMenuItem(IntPtr hMenu, int uIDEnableItem, int uEnable);
+        public static extern bool EnableMenuItem(IntPtr hMenu, int uIdEnableItem, int uEnable);
 
-        public const int WM_CREATE = 1;
+        public const int WmCreate = 1;
 
         [DllImport("user32")]
         public static extern bool ClientToScreen(IntPtr hWnd, ref Point lpPoint);
@@ -362,25 +380,25 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
+        public static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, SetWindowPosFlags uFlags);
 
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool DestroyWindow(IntPtr hWnd);
 
         [DllImport("kernel32")]
-        public static extern IntPtr GetStdHandle(UInt32 nStdHandle);
+        public static extern IntPtr GetStdHandle(uint nStdHandle);
 
         [DllImport("kernel32")]
-        public static extern void SetStdHandle(UInt32 nStdHandle, IntPtr handle);
+        public static extern void SetStdHandle(uint nStdHandle, IntPtr handle);
 
         [DllImport("kernel32")]
         public static extern bool AllocConsole();
 
         [DllImport("kernel32", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Auto, SetLastError = true)]
-        static extern public IntPtr CreateFileW(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+        public static extern IntPtr CreateFileW(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
     }
 }

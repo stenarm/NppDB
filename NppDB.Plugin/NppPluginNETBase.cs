@@ -43,7 +43,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
             // toggle value
             value = !value;
 
-            Win32.CheckMenuItem(Win32.GetMenu(nppData._nppHandle), _funcItems.Items[idx]._cmdID, Win32.MF_BYCOMMAND | (value ? Win32.MF_CHECKED : Win32.MF_UNCHECKED));
+            Win32.CheckMenuItem(Win32.GetMenu(nppData._nppHandle), _funcItems.Items[idx]._cmdID, Win32.MfBycommand | (value ? Win32.MfChecked : Win32.MfUnchecked));
         }
 
         internal static IntPtr GetCurrentScintilla()
