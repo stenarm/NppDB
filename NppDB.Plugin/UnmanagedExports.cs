@@ -38,14 +38,14 @@ namespace NppDB //Kbg.NppPluginNET
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static IntPtr getName()
         {
-            return _plugin.getName();
+            return _plugin.GetName();
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static void beNotified(IntPtr notifyCode)
         {
             var notification = (ScNotification)Marshal.PtrToStructure(notifyCode, typeof(ScNotification));
-            _plugin.beNotified(notification);            
+            _plugin.BeNotified(notification);            
         }
     }
 }

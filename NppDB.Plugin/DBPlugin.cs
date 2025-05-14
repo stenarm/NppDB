@@ -131,12 +131,12 @@ namespace NppDB
         }
         private IntPtr _ptrPluginName = IntPtr.Zero;
 
-        public IntPtr getName()
+        public IntPtr GetName()
         {
             if (_ptrPluginName == IntPtr.Zero) _ptrPluginName = Marshal.StringToHGlobalUni(PLUGIN_NAME); 
             return _ptrPluginName;
         }
-        public void beNotified(ScNotification nc) {
+        public void BeNotified(ScNotification nc) {
              switch (nc.Header.Code) {
                  case (uint)NppMsg.NPPN_TBMODIFICATION: _funcItems.RefreshItems(); SetToolBarIcons(); break;
                  case (uint)NppMsg.NPPN_SHUTDOWN: FinalizePlugin(); break;
@@ -167,7 +167,7 @@ namespace NppDB
                  }
                  catch (Exception ex)
                  {
-                     MessageBox.Show("plugin dir : " + ex.Message); throw ex;
+                     MessageBox.Show("plugin dir : " + ex.Message); throw;
                  }
              }
              _cfgPath = Path.Combine(_nppDbConfigDir, "config.xml");
@@ -179,7 +179,7 @@ namespace NppDB
                  }
                  catch (Exception ex)
                  {
-                     MessageBox.Show("config.xml : " + ex.Message); throw ex;
+                     MessageBox.Show("config.xml : " + ex.Message); throw;
                  }
              }
              _dbConnsPath = Path.Combine(_nppDbConfigDir, "dbconnects.xml");
@@ -191,7 +191,7 @@ namespace NppDB
                  }
                  catch (Exception ex)
                  {
-                     MessageBox.Show("dbconnects.xml : "+ ex.Message); throw ex;
+                     MessageBox.Show("dbconnects.xml : "+ ex.Message); throw;
                  }
              }
 
@@ -207,7 +207,7 @@ namespace NppDB
              }
              catch (Exception ex)
              {
-                 MessageBox.Show(ex.Message); throw ex;
+                 MessageBox.Show(ex.Message); throw;
              }
              SetCommand(0, "Execute SQL", Execute, new ShortcutKey(false, false, false, Keys.F9));
              SetCommand(1, "Analyze SQL", Analyze, new ShortcutKey(false, false, true, Keys.F9));
@@ -218,35 +218,63 @@ namespace NppDB
              _cmdFrmDbExplorerIdx = 2; 
         }
 
-        private void ReadTranslations() {
-             string translationsConfigPath = null;
-             try
-             {
-                 var xd = new XmlDocument();
+        private void ReadTranslations()
+        {
+            string localTranslationsConfigPath;
+            try
+            {
+                var xd = new XmlDocument();
+                xd.Load(_languageConfigPath);
+                var selectedLocalizationFileNode = xd.SelectSingleNode("/NotepadPlus/Native-Langue/@filename");
 
-                 xd.Load(_languageConfigPath);
+                if (selectedLocalizationFileNode != null && !string.IsNullOrEmpty(selectedLocalizationFileNode.Value))
+                {
+                    var selectedLocalizationFileName = selectedLocalizationFileNode.Value;
+                    var iniFileName = selectedLocalizationFileName.RemoveSuffix(".xml") + ".ini";
+                    localTranslationsConfigPath = Path.Combine(_nppDbPluginDir, iniFileName);
+                }
+                else
+                {
+                    Console.WriteLine($"Warning: Could not find selected language filename in '{_languageConfigPath}'. Fallback will be used.");
+                    localTranslationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception reading language config '{_languageConfigPath}': {ex.Message}. Defaulting to english.ini.");
+                localTranslationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini");
+            }
 
-                 var selectedLocalizationFileNode = xd.SelectSingleNode("/NotepadPlus/Native-Langue/@filename");
+            if (!string.IsNullOrEmpty(_translationsConfigPath) && _translationsConfigPath.Equals(localTranslationsConfigPath))
+            {
+                return;
+            }
+            _translationsConfigPath = localTranslationsConfigPath;
 
-                 if (selectedLocalizationFileNode != null && !string.IsNullOrEmpty(selectedLocalizationFileNode.Value))
-                 {
-                     var selectedLocalizationFileName = selectedLocalizationFileNode.Value;
+            if (string.IsNullOrEmpty(_translationsConfigPath) || !File.Exists(_translationsConfigPath))
+            {
+                MessageBox.Show($"Translation INI file not found at: {_translationsConfigPath ?? "Path not set"}. Warnings will not be translated.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _warningMessages.Clear();
+                _generalTranslations.Clear();
+                _generalTranslations[ParserMessageType.WARNING_FORMAT] = "Warning at {0}:{1} : {2}";
+                return;
+            }
 
-                     var iniFileName = selectedLocalizationFileName.RemoveSuffix(".xml") + ".ini";
-                     translationsConfigPath = Path.Combine(_nppDbPluginDir, iniFileName);
-                 }
-                 else
-                 {
-                     Console.WriteLine($"Warning: Could not find selected language filename in '{_languageConfigPath}'. Fallback will be used.");
-                 }
-             }
-             catch (Exception) { translationsConfigPath = Path.Combine(_nppDbPluginDir, "english.ini"); }
-             if (!string.IsNullOrEmpty(_translationsConfigPath) && _translationsConfigPath.Equals(translationsConfigPath)) return;
-             _translationsConfigPath = translationsConfigPath;
-             Console.WriteLine($@"Plugin translations: {_translationsConfigPath}");
-             var dict = new Dictionary<ParserMessageType, string> { };
-             var dict1 = new Dictionary<ParserMessageType, string> { { ParserMessageType.WARNING_FORMAT, "Warning at {0}:{1} : {2}" }, };
-             ReadTranslations("Warnings", dict, ref _warningMessages); ReadTranslations("General", dict1, ref _generalTranslations); }
+            Console.WriteLine($@"Plugin translations being loaded from: {_translationsConfigPath}");
+
+            var warningTypesToLoad = Enum.GetValues(typeof(ParserMessageType)).Cast<ParserMessageType>().Where(type => type != ParserMessageType.WARNING_FORMAT).ToDictionary(type => type, type => string.Empty);
+
+            var generalTypesToLoad = new Dictionary<ParserMessageType, string>
+            {
+                { ParserMessageType.WARNING_FORMAT, "Warning at {0}:{1} : {2}" }
+            };
+
+            _warningMessages.Clear();
+            _generalTranslations.Clear();
+
+            ReadTranslations("Warnings", warningTypesToLoad, ref _warningMessages);
+            ReadTranslations("General", generalTypesToLoad, ref _generalTranslations);
+        }
 
         private void ReadTranslations(string sectionName, in Dictionary<ParserMessageType, string> inputDictionary, ref Dictionary<ParserMessageType, string> outputDictionary)
         {
