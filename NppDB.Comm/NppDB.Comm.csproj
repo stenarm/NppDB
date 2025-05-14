@@ -104,6 +104,7 @@
         <Compile Include="IDBConnect.cs" />
         <Compile Include="IMenuProvider.cs" />
         <Compile Include="ISQLExecutor.cs" />
+        <Compile Include="SqlDialect.cs" />
         <Compile Include="Types.cs" />
         <Compile Include="Constants.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />

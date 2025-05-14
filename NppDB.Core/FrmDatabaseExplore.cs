@@ -350,6 +350,8 @@ namespace NppDB.Core
             shortcutText.AppendLine("");
             shortcutText.AppendLine("Analyze SQL:                       Shift+F9");
             shortcutText.AppendLine("");
+            shortcutText.AppendLine("Generate AI prompt:            Ctrl+F9");
+            shortcutText.AppendLine("");
             shortcutText.AppendLine("Clear Analysis:           Ctrl+Shift+F9");
             shortcutText.AppendLine("");
             shortcutText.AppendLine("DB Connect Manager:               F10");

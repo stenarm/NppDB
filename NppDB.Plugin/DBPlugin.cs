@@ -13,10 +13,9 @@ using Kbg.NppPluginNET.PluginInfrastructure;
 using Microsoft.Win32.SafeHandles;
 using NppDB.Comm;
 using NppDB.Core;
-using NppDB.Properties;
-using NppDB.PostgreSQL;
 using NppDB.MSAccess;
-
+using NppDB.PostgreSQL;
+using NppDB.Properties;
 
 namespace NppDB
 {
@@ -43,10 +42,15 @@ namespace NppDB
         private Icon _tbIcon;
         private readonly Func<IScintillaGateway> _getCurrentEditor = GetGatewayFactory();
         private readonly List<string> _editorErrors = new List<string>();
+        private readonly List<Tuple<string, ParserMessage>> _structuredErrorDetails = new List<Tuple<string, ParserMessage>>();
         private Dictionary<ParserMessageType, string> _warningMessages = new Dictionary<ParserMessageType, string>();
         private Dictionary<ParserMessageType, string> _generalTranslations = new Dictionary<ParserMessageType, string>();
         private Control _currentCtr;
         private const int DEFAULT_SQL_RESULT_HEIGHT = 200;
+        private ParserResult _lastAnalysisResult;
+        private string _lastAnalyzedText;
+        private SqlDialect _lastUsedDialect;
+        private IScintillaGateway _lastEditor;
 
 
         static NppDbPlugin()
@@ -215,6 +219,7 @@ namespace NppDB
              SetCommand(3, "Clear analysis", ClearAnalysis, new ShortcutKey(true, false, true, Keys.F9));
              SetCommand(4, "Open console", OpenConsole);
              SetCommand(5, "About", ShowAbout);
+             SetCommand(6, "Generate AI prompt:", HandleCtrlF9ForAiPrompt, new ShortcutKey(true, false, false, Keys.F9));
              _cmdFrmDbExplorerIdx = 2; 
         }
 
@@ -374,7 +379,7 @@ namespace NppDB
 
             if (_imgMan == null)
             {
-                Console.WriteLine($"Error: Toolbar icon image resource (_imgMan) is null.");
+                Console.WriteLine("Error: Toolbar icon image resource (_imgMan) is null.");
                 return;
             }
 
@@ -473,6 +478,10 @@ namespace NppDB
                 if (string.IsNullOrWhiteSpace(textToParse))
                 {
                     ClearAnalysisIndicators(editor);
+                    _lastAnalysisResult = null;
+                    _lastAnalyzedText = null;
+                    _lastUsedDialect = SqlDialect.NONE;
+                    _lastEditor = null;
                     return;
                 }
                 textToParse = textToParse.Replace("\t", "    ");
@@ -486,6 +495,7 @@ namespace NppDB
                 attachedResult = SQLResultManager.Instance.GetSQLResult(bufId);
 
                 ParserResult analysisResult;
+                SqlDialect currentDialect;
                 if (attachedResult != null)
                 {
                     if (!attachedResult.LinkedDbConnect.IsOpened && !onlyAnalyze)
@@ -493,6 +503,8 @@ namespace NppDB
                         MessageBox.Show("Database connection is closed. Cannot execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
+
+                    currentDialect = attachedResult.LinkedDbConnect.Dialect;
 
                     var caretPosition = GetCaretPosition();
                     analysisResult = attachedResult.Parse(textToParse, caretPosition);
@@ -506,7 +518,7 @@ namespace NppDB
                         return;
                     }
 
-                    ISqlExecutor chosenExecutor;
+                    ISqlExecutor chosenExecutorForAnalysisOnly;
                     using (var dialectDlg = new FrmSelectSqlDialect())
                     {
                         IWin32Window owner = Control.FromHandle(nppData._nppHandle);
@@ -515,68 +527,87 @@ namespace NppDB
                             return;
                         }
 
-                        switch (dialectDlg.SelectedDialect)
+                        currentDialect = dialectDlg.SelectedDialect;
+
+                        switch (currentDialect)
                         {
-                            case SqlDialect.PostgreSQL:
-                                chosenExecutor = new PostgreSQLExecutor(null);
+                            case SqlDialect.POSTGRE_SQL:
+                                chosenExecutorForAnalysisOnly = new PostgreSqlExecutor(null);
                                 break;
-                            case SqlDialect.MsAccess:
-                                chosenExecutor = new MSAccessExecutor(null);
+                            case SqlDialect.MS_ACCESS:
+                                chosenExecutorForAnalysisOnly = new MsAccessExecutor(null);
                                 break;
-                            case SqlDialect.None:
+                            case SqlDialect.NONE:
                             default:
                                 MessageBox.Show("No SQL dialect selected for analysis.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 return;
                         }
                     }
 
+
                     var caretPosition = GetCaretPosition();
-                    analysisResult = chosenExecutor.Parse(textToParse, caretPosition);
+                    analysisResult = chosenExecutorForAnalysisOnly.Parse(textToParse, caretPosition);
                 }
 
-                var hasErrors = analysisResult?.Errors?.Any() ?? false;
-                var hasWarns = analysisResult?.Commands?.Any(c => c != null && ((c.Warnings?.Any() ?? false) || (c.AnalyzeErrors?.Any() ?? false))) ?? false;
+                if (analysisResult == null)
+                {
+                    MessageBox.Show("Analysis failed to produce a result.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                     _lastAnalysisResult = null;
+                     _lastAnalyzedText = textToParse;
+                     _lastUsedDialect = currentDialect;
+                     _lastEditor = editor;
+                    return;
+                }
+
+
+                var hasErrors = analysisResult.Errors?.Any() ?? false;
+                var hasWarns = analysisResult.Commands?.Any(c => c != null && ((c.Warnings?.Any() ?? false) || (c.AnalyzeErrors?.Any() ?? false))) ?? false;
 
                 if (showFeedbackOnSuccess || hasErrors || hasWarns)
                 {
-                    if (analysisResult != null)
-                    {
-                        DisplayAnalysisFeedback(editor, analysisResult, baseLine);
-                    } else {
-                         ClearAnalysisIndicators(editor);
-                    }
-                } else {
+                    DisplayAnalysisFeedback(editor, analysisResult, baseLine, selectionOnly);
+                }
+                else
+                {
                     ClearAnalysisIndicators(editor);
                 }
 
                 attachedResult?.SetError(hasErrors ? "Analysis found errors." : (hasWarns ? "Analysis found warnings." : ""));
 
-                if (onlyAnalyze) return;
+                _lastAnalysisResult = analysisResult;
+                _lastAnalyzedText = textToParse;
+                _lastUsedDialect = currentDialect;
+                _lastEditor = editor;
+
+                if (onlyAnalyze)
                 {
-                    if (hasErrors)
-                    {
-                        MessageBox.Show("Execution cancelled due to parsing errors. Please fix the errors shown.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    if (analysisResult?.Commands == null || !analysisResult.Commands.Any())
-                    {
-                        MessageBox.Show("No valid SQL commands found to execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    return;
+                }
+                if (hasErrors)
+                {
+                    MessageBox.Show("Execution cancelled due to parsing errors. Please fix the errors shown.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (analysisResult.Commands == null || !analysisResult.Commands.Any())
+                {
+                    MessageBox.Show("No valid SQL commands found to execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
 
-                    var commandIndex = (analysisResult.EnclosingCommandIndex >= 0 && analysisResult.EnclosingCommandIndex < analysisResult.Commands.Count)
-                        ? analysisResult.EnclosingCommandIndex : 0;
-                    var commandsToExecute = selectionOnly
-                        ? analysisResult.Commands.Where(c => c != null).Select(c => c.Text).ToList()
-                        : analysisResult.Commands.Skip(commandIndex).Take(1).Where(c => c != null).Select(c => c.Text).ToList();
+                var commandIndex = (analysisResult.EnclosingCommandIndex >= 0 && analysisResult.EnclosingCommandIndex < analysisResult.Commands.Count)
+                                    ? analysisResult.EnclosingCommandIndex : 0;
+                var commandsToExecute = selectionOnly
+                    ? analysisResult.Commands.Where(c => c != null).Select(c => c.Text).ToList()
+                    : analysisResult.Commands.Skip(commandIndex).Take(1).Where(c => c != null).Select(c => c.Text).ToList();
 
-                    if (commandsToExecute.Any(cmd => !string.IsNullOrWhiteSpace(cmd)))
-                    {
-                        attachedResult.SetError("");
-                        attachedResult.Execute(commandsToExecute);
-                    } else {
-                        MessageBox.Show("Could not determine specific command to execute based on selection or caret position.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    }
+                if (commandsToExecute.Any(cmd => !string.IsNullOrWhiteSpace(cmd)))
+                {
+                    attachedResult.SetError("");
+                    attachedResult.Execute(commandsToExecute);
+                }
+                else
+                {
+                    MessageBox.Show("Could not determine specific command to execute based on selection or caret position.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             catch (Exception ex)
@@ -584,12 +615,49 @@ namespace NppDB
                 MessageBox.Show($"An error occurred during analysis/execution:\n{ex.Message}\n{ex.StackTrace}", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 attachedResult?.SetError($"Unexpected Error: {ex.Message}");
                 if (editor != null) ClearAnalysisIndicators(editor);
+
+                _lastAnalysisResult = null;
+                _lastAnalyzedText = null;
+                _lastUsedDialect = SqlDialect.NONE;
+                _lastEditor = null;
+            }
+        }
+        
+        private void GenerateAiPromptForFirstIssue()
+        {
+            if (_lastAnalysisResult == null || string.IsNullOrEmpty(_lastAnalyzedText) || _lastEditor == null)
+            {
+                MessageBox.Show("Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            ParserMessage firstMessage = null;
+            if (_lastAnalysisResult.Errors != null && _lastAnalysisResult.Errors.Any(e => e != null))
+            {
+                firstMessage = _lastAnalysisResult.Errors.First(e => e != null);
+            }
+            else if (_lastAnalysisResult.Commands != null)
+            {
+                firstMessage = _lastAnalysisResult.Commands
+                    .Where(c => c != null)
+                    .SelectMany(c => (c.Warnings ?? Enumerable.Empty<ParserMessage>())
+                        .Concat(c.AnalyzeErrors ?? Enumerable.Empty<ParserMessage>()))
+                    .FirstOrDefault(m => m != null);
+            }
+
+            if (firstMessage != null)
+            {
+                GenerateAiDebugPromptForMessage(firstMessage, _lastAnalyzedText, _lastUsedDialect, _lastEditor);
+            }
+            else
+            {
+                MessageBox.Show("No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private static CaretPosition GetCaretPosition()
         {
-            return new NppDB.Comm.CaretPosition
+            return new CaretPosition
             {
                 Line = Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTLINE, 0, 0).ToInt32() + 1,
                 Column = Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTCOLUMN, 0, 0).ToInt32(),
@@ -655,7 +723,7 @@ namespace NppDB
             return text;
         }
 
-        private void DisplayAnalysisFeedback(IScintillaGateway editor, ParserResult parserResult, int baseLine)
+        private void DisplayAnalysisFeedback(IScintillaGateway editor, ParserResult parserResult, int baseLine, bool selectionOnly)
         {
             if (editor == null || parserResult == null) return;
 
@@ -664,86 +732,135 @@ namespace NppDB
             editor.AnnotationClearAll();
             editor.SetIndicatorCurrent(20);
             editor.IndicatorClearRange(0, textLength);
+
+            lock (_structuredErrorDetails)
+            {
+                _structuredErrorDetails.Clear();
+            }
             lock (_editorErrors)
             {
                 _editorErrors.Clear();
             }
 
-
-            const int WARN_STYLE = 199;
-            const int ERROR_STYLE = 200;
-            try {
-                editor.StyleSetFont(WARN_STYLE, "Tahoma"); editor.StyleSetSize(WARN_STYLE, 8);
-                editor.StyleSetBack(WARN_STYLE, new Colour(250, 250, 200)); editor.StyleSetFore(WARN_STYLE, new Colour(100, 100, 0));
-                editor.StyleSetFont(ERROR_STYLE, "Tahoma"); editor.StyleSetSize(ERROR_STYLE, 8);
-                editor.StyleSetBack(ERROR_STYLE, new Colour(255, 220, 220)); editor.StyleSetFore(ERROR_STYLE, new Colour(180, 0, 0));
-            } catch (Exception styleEx){ Console.WriteLine($"Style Setting Error: {styleEx.Message}"); }
+            const int warnStyle = 199;
+            const int errorStyle = 200;
+            try
+            {
+                editor.StyleSetFont(warnStyle, "Tahoma"); editor.StyleSetSize(warnStyle, 8);
+                editor.StyleSetBack(warnStyle, new Colour(250, 250, 200)); editor.StyleSetFore(warnStyle, new Colour(100, 100, 0));
+                editor.StyleSetFont(errorStyle, "Tahoma"); editor.StyleSetSize(errorStyle, 8);
+                editor.StyleSetBack(errorStyle, new Colour(255, 220, 220)); editor.StyleSetFore(errorStyle, new Colour(180, 0, 0));
+            }
+            catch (Exception styleEx) { Console.WriteLine($"Style Setting Error: {styleEx.Message}"); }
 
             var lineAnnotations = new Dictionary<int, Tuple<int, StringBuilder>>();
             var allMessages = new List<ParserMessage>();
-            if (parserResult.Errors != null) allMessages.AddRange(parserResult.Errors.Where(e => e != null));
-            if (parserResult.Commands != null) {
-                 foreach(var cmd in parserResult.Commands.Where(c => c != null)) {
-                     if (cmd.Warnings != null) allMessages.AddRange(cmd.Warnings.Where(w => w != null));
-                     if (cmd.AnalyzeErrors != null) allMessages.AddRange(cmd.AnalyzeErrors.Where(w => w != null));
-                 }
+
+            if (parserResult.Errors != null)
+            {
+                allMessages.AddRange(parserResult.Errors.Where(e => e != null));
             }
+            if (parserResult.Commands != null)
+            {
+                foreach (var cmd in parserResult.Commands.Where(c => c != null))
+                {
+                    if (cmd.Warnings != null) allMessages.AddRange(cmd.Warnings.Where(w => w != null));
+                    if (cmd.AnalyzeErrors != null) allMessages.AddRange(cmd.AnalyzeErrors.Where(w => w != null));
+                }
+            }
+
+            var currentErrorIndicatorValue = 0;
 
             foreach (var msg in allMessages.OrderBy(m => m.StartLine).ThenBy(m => m.StartColumn))
             {
                 if (msg.StartLine <= 0 || msg.StartColumn < 0 || msg.StartOffset < 0 || msg.StopOffset < msg.StartOffset) continue;
 
                 var isError = msg is ParserError;
-                var style = isError ? ERROR_STYLE : WARN_STYLE;
+                var style = isError ? errorStyle : warnStyle;
                 var prefix = isError ? "Error:" : "Warning:";
                 var line = baseLine + msg.StartLine - 1;
                 if (line < 0) line = 0;
 
-                var messageKeyText = _warningMessages.TryGetValue(msg.Type, out var message) ? message : msg.Text;
+                var messageKeyText = _warningMessages.TryGetValue(msg.Type, out var translatedMsg) ? translatedMsg : msg.Text;
+                if (string.IsNullOrEmpty(messageKeyText)) messageKeyText = msg.Text ?? "Undefined issue";
+
                 var messageText = $"{prefix} (L{msg.StartLine} C{msg.StartColumn + 1}) {messageKeyText?.Replace("\\n", "\n") ?? ""}";
 
-                if (lineAnnotations.TryGetValue(line, out var existingAnnotation)) {
+                if (lineAnnotations.TryGetValue(line, out var existingAnnotation))
+                {
                     existingAnnotation.Item2.AppendLine().Append(messageText);
-                    if (isError && existingAnnotation.Item1 != ERROR_STYLE) lineAnnotations[line] = Tuple.Create(style, existingAnnotation.Item2);
-                } else {
+                    if (isError && existingAnnotation.Item1 != errorStyle)
+                    {
+                        lineAnnotations[line] = Tuple.Create(style, existingAnnotation.Item2);
+                    }
+                }
+                else
+                {
                     lineAnnotations[line] = Tuple.Create(style, new StringBuilder(messageText));
                 }
 
+                lock (_structuredErrorDetails)
+                {
+                    _structuredErrorDetails.Add(Tuple.Create(messageText, msg));
+                }
+
                 if (!isError) continue;
+                lock (_editorErrors)
+                {
+                    _editorErrors.Add(messageText);
+                }
+
                 int length;
                 int startBytePos;
 
-                if (baseLine == 0) {
-                    startBytePos = msg.StartOffset;
+                if (selectionOnly)
+                {
+                    var selectionStartPos = editor.GetSelectionStart();
+                    startBytePos = selectionStartPos + msg.StartOffset;
                     length = Math.Max(1, msg.StopOffset - msg.StartOffset + 1);
-                } else {
+                }
+                else
+                {
                     startBytePos = msg.StartOffset;
                     length = Math.Max(1, msg.StopOffset - msg.StartOffset + 1);
                 }
 
-                lock(_editorErrors) _editorErrors.Add(messageText);
+                if (startBytePos < 0) startBytePos = 0;
+                if (startBytePos + length > textLength) length = textLength - startBytePos;
+                if (length < 0) length = 0;
 
-                try {
+                try
+                {
                     editor.SetIndicatorCurrent(20);
                     editor.IndicSetStyle(20, IndicatorStyle.SQUIGGLE);
                     editor.IndicSetFore(20, new Colour(255, 0, 0));
-                    lock (_editorErrors)
+
+                    currentErrorIndicatorValue++;
+                    editor.SetIndicatorValue(currentErrorIndicatorValue);
+
+                    if (length > 0)
                     {
-                        editor.SetIndicatorValue(_editorErrors.Count);
+                        editor.IndicatorFillRange(startBytePos, length);
                     }
-                    editor.IndicatorFillRange(startBytePos, length);
-                } catch(Exception indicatorEx) { Console.WriteLine($"Indicator Error: {indicatorEx.Message} Pos:{startBytePos} Len:{length}");}
+                }
+                catch (Exception indicatorEx)
+                {
+                    Console.WriteLine($"Indicator Error: {indicatorEx.Message} Pos:{startBytePos} Len:{length}");
+                }
             }
 
             foreach (var entry in lineAnnotations.Where(entry => entry.Key >= 0 && entry.Key < editor.GetLineCount()))
             {
-                try {
+                try
+                {
                     editor.AnnotationSetStyle(entry.Key, entry.Value.Item1);
                     editor.AnnotationSetText(entry.Key, entry.Value.Item2.ToString());
-                } catch (Exception annEx) { Console.WriteLine($"Annotation Error Line {entry.Key}: {annEx.Message}");}
+                }
+                catch (Exception annEx) { Console.WriteLine($"Annotation Error Line {entry.Key}: {annEx.Message}"); }
             }
 
-            if (lineAnnotations.Count > 0) {
+            if (lineAnnotations.Count > 0)
+            {
                 try { editor.AnnotationSetVisible(AnnotationVisible.BOXED); }
                 catch
                 {
@@ -781,13 +898,27 @@ namespace NppDB
         {
             var editor = _getCurrentEditor();
             var value = editor.IndicatorValueAt(20, Convert.ToInt32(position.Value));
-            lock (_editorErrors)
+
+            string tipText = null;
+
+            lock (_structuredErrorDetails)
             {
-                if (value <= 0 || value - 1 >= _editorErrors.Count) return;
-                try {
-                    editor.CallTipShow(Convert.ToInt32(position.Value), _editorErrors[value - 1]);
-                } catch (Exception ex) { Console.WriteLine($"CallTipShow Error: {ex.Message}"); }
+                var errorCount = 0;
+                foreach (var t in _structuredErrorDetails.Where(t => t.Item2 is ParserError))
+                {
+                    errorCount++;
+                    if (errorCount != value) continue;
+                    tipText = t.Item1;
+                    break;
+                }
             }
+
+            if (tipText == null) return;
+            try
+            {
+                editor.CallTipShow(Convert.ToInt32(position.Value), tipText);
+            }
+            catch (Exception ex) { Console.WriteLine($"CallTipShow Error: {ex.Message}"); }
         }
 
         private void CloseTip()
@@ -828,7 +959,7 @@ namespace NppDB
                     case NppDbCommandType.CreateResultView:
                         if (parameters != null && parameters.Length >= 3 && parameters[0] is IntPtr p0 && parameters[1] is IDbConnect p1 && parameters[2] is ISqlExecutor p2)
                              return AddSqlResult(p0, p1, p2);
-                        else return null;
+                        return null;
                     case NppDbCommandType.DestroyResultView:
                         CloseCurrentSqlResult();
                         break;
@@ -912,7 +1043,7 @@ namespace NppDB
             }
         }
 
-        private static void ResetViewPos(Control control)
+        private static void ResetViewPos()
         {
             try
             {
@@ -992,7 +1123,7 @@ namespace NppDB
 
              if (result.IsHandleCreated && !result.IsDisposed)
              {
-                 ResetViewPos(result);
+                 ResetViewPos();
              }
 
              if (result.IsHandleCreated && !result.IsDisposed)
@@ -1101,7 +1232,7 @@ namespace NppDB
 
             if (controlToHide != null && controlToHide.IsHandleCreated && !controlToHide.IsDisposed && controlToHide.Visible)
             {
-                ResetViewPos(controlToHide);
+                ResetViewPos();
                 controlToHide.Visible = false;
             }
 
@@ -1202,5 +1333,91 @@ namespace NppDB
                  }
              }
          }
+
+         private void HandleCtrlF9ForAiPrompt()
+         {
+             var analysisInfoAvailable = _lastAnalysisResult != null && _lastEditor != null &&
+                                         ((_lastAnalysisResult.Errors != null && _lastAnalysisResult.Errors.Any(e => e != null)) ||
+                                          (_lastAnalysisResult.Commands != null && _lastAnalysisResult.Commands.Any(c => c != null &&
+                                              ((c.Warnings != null && c.Warnings.Any(w => w != null)) ||
+                                               (c.AnalyzeErrors != null && c.AnalyzeErrors.Any(ae => ae != null))))));
+
+             if (analysisInfoAvailable)
+             {
+                 GenerateAiPromptForFirstIssue();
+             }
+         }
+
+        private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+        {
+            if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null)
+            {
+                MessageBox.Show("Not enough information to generate AI debug prompt.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var dbDialectString = dialect.ToString();
+
+            var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
+                                              ? translated
+                                              : targetMessage.Text;
+            if (string.IsNullOrEmpty(translatedAnalysisMessage))
+            {
+                translatedAnalysisMessage = targetMessage.Text ?? "N/A";
+            }
+
+            var errorLineZeroBased = targetMessage.StartLine - 1;
+            var snippetBuilder = new StringBuilder();
+            var startSnippetLine = Math.Max(0, errorLineZeroBased - 1);
+            var endSnippetLine = Math.Min(editor.GetLineCount() - 1, errorLineZeroBased + 1);
+
+            for (var i = startSnippetLine; i <= endSnippetLine; i++)
+            {
+                var lineText = editor.GetLine(i);
+                snippetBuilder.AppendLine($"{i + 1:D3}: {lineText.TrimEnd('\r', '\n')}");
+            }
+            var codeSnippet = snippetBuilder.ToString().Trim();
+            if (string.IsNullOrWhiteSpace(codeSnippet)) codeSnippet = "Could not retrieve code snippet.";
+
+            var promptBuilder = new StringBuilder();
+            promptBuilder.AppendLine($"You are an expert {dbDialectString} SQL developer and troubleshooter.");
+            promptBuilder.AppendLine("I need help understanding and fixing an issue with my SQL query.");
+            promptBuilder.AppendLine();
+            promptBuilder.AppendLine("Here is the information:");
+            promptBuilder.AppendLine($"1.  Database Dialect: {dbDialectString}");
+            promptBuilder.AppendLine("2.  SQL Query:");
+            promptBuilder.AppendLine(fullQuery.Trim());
+            promptBuilder.AppendLine();
+            promptBuilder.AppendLine($"3.  Analysis Feedback (Warning/Error): \"{translatedAnalysisMessage}\"");
+            promptBuilder.AppendLine($"4.  Location of Issue: Line {targetMessage.StartLine}, Column {targetMessage.StartColumn + 1}.");
+            promptBuilder.AppendLine("    (The issue is around this part of the code:)");
+            promptBuilder.AppendLine(codeSnippet);
+            promptBuilder.AppendLine();
+            promptBuilder.AppendLine("Please:");
+            promptBuilder.AppendLine($"a. Explain what this feedback message means in the context of my query and the {dbDialectString} dialect.");
+            promptBuilder.AppendLine("b. Identify the most likely cause(s) of this issue in my query.");
+            promptBuilder.AppendLine("c. Provide specific, corrected SQL code snippet(s) to resolve the issue.");
+            promptBuilder.AppendLine("d. If applicable, suggest any SQL best practices related to this problem to avoid it in the future.");
+
+            var generatedPrompt = promptBuilder.ToString();
+
+            try
+            {
+                Clipboard.SetText(generatedPrompt);
+
+                var dialogMessage = "AI debug prompt copied to clipboard!\n\n" +
+                                    "--- Prompt Content: ---\n" +
+                                    generatedPrompt;
+
+                MessageBox.Show(dialogMessage,
+                                PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error copying prompt to clipboard or displaying prompt: {ex.Message}",
+                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

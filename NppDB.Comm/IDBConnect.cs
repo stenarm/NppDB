@@ -16,5 +16,6 @@
         string ServerAddress { get; set; }
         bool IsOpened { get; }
         string DatabaseSystemName { get; }
+        SqlDialect Dialect { get; }
     }
 }
