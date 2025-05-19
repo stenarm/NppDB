@@ -1393,7 +1393,7 @@ namespace NppDB
             promptBuilder.AppendLine("    (The issue is around this part of the code:)");
             promptBuilder.AppendLine(codeSnippet);
             promptBuilder.AppendLine();
-            promptBuilder.AppendLine("Please:");
+            promptBuilder.AppendLine("Please, using a clear, numbered step-by-step thought process:");
             promptBuilder.AppendLine($"a. Explain what this feedback message means in the context of my query and the {dbDialectString} dialect.");
             promptBuilder.AppendLine("b. Identify the most likely cause(s) of this issue in my query.");
             promptBuilder.AppendLine("c. Provide specific, corrected SQL code snippet(s) to resolve the issue.");
