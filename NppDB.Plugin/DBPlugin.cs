@@ -112,6 +112,8 @@ namespace NppDB
         #region plugin interface
 
         public static bool IsUnicode() { return true; }
+        public static string PluginDirectoryPath { get; private set; }
+        public static IntPtr GetNppHandle() => nppData._nppHandle;
         public void SetInfo(NppData notepadPlusData) { nppData = notepadPlusData; InitPlugin(); }
 
         public static IntPtr GetFuncsArray(ref int nbF)
@@ -158,10 +160,11 @@ namespace NppDB
         #region initialize and finalize a plugin
 
         private void InitPlugin() {
-             DBServerManager.Instance.NppCommandHost = this;
+             DbServerManager.Instance.NppCommandHost = this;
              var sbCfgPath = new StringBuilder(Win32.MaxPath);
              Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR, Win32.MaxPath, sbCfgPath);
              _nppDbPluginDir = Path.GetDirectoryName(Uri.UnescapeDataString(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath));
+             PluginDirectoryPath = _nppDbPluginDir;
              _nppDbConfigDir = Path.Combine(sbCfgPath.ToString(), PLUGIN_NAME);
              if (!Directory.Exists(_nppDbConfigDir))
              {
@@ -191,7 +194,7 @@ namespace NppDB
              {
                  try
                  {
-                     DBServerManager.Instance.LoadFromXml(_dbConnsPath);
+                     DbServerManager.Instance.LoadFromXml(_dbConnsPath);
                  }
                  catch (Exception ex)
                  {
@@ -426,7 +429,7 @@ namespace NppDB
             {
                 Options.Instance.SaveToXml(_cfgPath);
 
-                DBServerManager.Instance.SaveToXml(_dbConnsPath);
+                DbServerManager.Instance.SaveToXml(_dbConnsPath);
             }
             catch (Exception ex)
             {
@@ -711,12 +714,12 @@ namespace NppDB
             }
             catch (Exception ex) when (ex is ArgumentOutOfRangeException || ex is ArgumentException || ex is NotSupportedException)
             {
-                MessageBox.Show($"Scintilla Text Encoding Error (Codepage: {codePage}): {ex.Message}", "Encoding Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Scintilla Text Encoding Error (Codepage: {codePage}): {ex.Message}", @"Encoding Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 try { text = Encoding.UTF8.GetString(textBuffer, 0, length); } catch { text = string.Empty; }
             }
             catch(Exception genEx)
             {
-                 MessageBox.Show($"Error getting Scintilla text: {genEx.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                 MessageBox.Show($"Error getting Scintilla text: {genEx.Message}", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                  text = string.Empty;
             }
 
@@ -947,30 +950,37 @@ namespace NppDB
             {
                 switch (type)
                 {
-                    case NppDbCommandType.ActivateBuffer:
+                    case NppDbCommandType.ACTIVATE_BUFFER:
                         ActivateBufferId((int)parameters[0]);
                         break;
-                    case NppDbCommandType.AppendToCurrentView:
+                    case NppDbCommandType.APPEND_TO_CURRENT_VIEW:
                         AppendToScintillaText(GetCurrentScintilla(), (string)parameters[0]);
                         break;
-                    case NppDbCommandType.NewFile:
+                    case NppDbCommandType.NEW_FILE:
                         NewFile();
                         break;
-                    case NppDbCommandType.CreateResultView:
+                    case NppDbCommandType.CREATE_RESULT_VIEW:
                         if (parameters != null && parameters.Length >= 3 && parameters[0] is IntPtr p0 && parameters[1] is IDbConnect p1 && parameters[2] is ISqlExecutor p2)
                              return AddSqlResult(p0, p1, p2);
                         return null;
-                    case NppDbCommandType.DestroyResultView:
+                    case NppDbCommandType.DESTROY_RESULT_VIEW:
                         CloseCurrentSqlResult();
                         break;
-                    case NppDbCommandType.ExecuteSQL:
+                    case NppDbCommandType.EXECUTE_SQL:
                          if (parameters != null && parameters.Length >= 2 && parameters[0] is IntPtr pSql0 && parameters[1] is string pSql1)
                              ExecuteSql(pSql0, pSql1);
                          break;
-                    case NppDbCommandType.GetAttachedBufferID:
+                    case NppDbCommandType.GET_ATTACHED_BUFFER_ID:
                         return GetCurrentAttachedBufferId();
-                    case NppDbCommandType.GetActivatedBufferID:
+                    case NppDbCommandType.GET_ACTIVATED_BUFFER_ID:
                         return GetCurrentBufferId();
+                    case NppDbCommandType.OPEN_FILE_IN_NPP:
+                        if (parameters == null || parameters.Length < 1 || !(parameters[0] is string filePath))
+                            return false;
+                        Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_DOOPEN, 0, filePath);
+                        return true;
+                    case NppDbCommandType.GET_PLUGIN_DIRECTORY:
+                        return _nppDbPluginDir;
                     default:
                         return null;
                 }
@@ -1142,7 +1152,7 @@ namespace NppDB
 
          private void Unregister(IDbConnect connection)
          {
-             DBServerManager.Instance.Unregister(connection); 
+             DbServerManager.Instance.Unregister(connection); 
              connection.Disconnect(); 
              CloseCurrentSqlResult(); 
              SQLResultManager.Instance.RemoveSQLResults(connection);
@@ -1348,7 +1358,7 @@ namespace NppDB
              }
          }
 
-        private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+         private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
         {
             if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null)
             {
@@ -1356,8 +1366,87 @@ namespace NppDB
                 return;
             }
 
-            var dbDialectString = dialect.ToString();
+            string generatedPrompt;
 
+            try
+            {
+                var templateFilePath = Path.Combine(_nppDbPluginDir, "AIPromptTemplate.txt");
+
+                if (!File.Exists(templateFilePath))
+                {
+                    MessageBox.Show($"AI prompt template file not found at: {templateFilePath}\nPlease ensure 'AIPromptTemplate.txt' exists in the NppDB plugin directory.",
+                                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
+                    if (string.IsNullOrEmpty(generatedPrompt)) return;
+                }
+                else
+                {
+                    var promptTemplate = File.ReadAllText(templateFilePath);
+
+                    var dbDialectString = dialect.ToString();
+                    var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
+                                                      ? translated
+                                                      : targetMessage.Text;
+                    if (string.IsNullOrEmpty(translatedAnalysisMessage))
+                    {
+                        translatedAnalysisMessage = targetMessage.Text ?? "N/A";
+                    }
+
+                    var errorLineZeroBased = targetMessage.StartLine - 1;
+                    var snippetBuilder = new StringBuilder();
+                    var startSnippetLine = Math.Max(0, errorLineZeroBased - 1);
+                    var endSnippetLine = Math.Min(editor.GetLineCount() - 1, errorLineZeroBased + 1);
+
+                    for (var i = startSnippetLine; i <= endSnippetLine; i++)
+                    {
+                        var lineText = editor.GetLine(i);
+                        snippetBuilder.AppendLine($"{i + 1:D3}: {lineText.TrimEnd('\r', '\n')}");
+                    }
+                    var codeSnippet = snippetBuilder.ToString().Trim();
+                    if (string.IsNullOrWhiteSpace(codeSnippet)) codeSnippet = "Could not retrieve code snippet.";
+
+                    generatedPrompt = promptTemplate
+                        .Replace("{DATABASE_DIALECT}", dbDialectString)
+                        .Replace("{SQL_QUERY}", fullQuery.Trim())
+                        .Replace("{ANALYSIS_MESSAGE}", translatedAnalysisMessage)
+                        .Replace("{LINE_NUMBER}", targetMessage.StartLine.ToString())
+                        .Replace("{COLUMN_NUMBER}", (targetMessage.StartColumn + 1).ToString())
+                        .Replace("{CODE_SNIPPET}", codeSnippet);
+                }
+            }
+            catch (Exception exReadTemplate)
+            {
+                MessageBox.Show($"Error reading or processing AI prompt template: {exReadTemplate.Message}\nFalling back to default prompt.",
+                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
+                if (string.IsNullOrEmpty(generatedPrompt)) return;
+            }
+
+
+            try
+            {
+                Clipboard.SetText(generatedPrompt);
+
+                var dialogMessage = "AI debug prompt copied to clipboard!\n\n" +
+                                    "--- Prompt Content: ---\n" +
+                                    generatedPrompt;
+
+                MessageBox.Show(dialogMessage,
+                                PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
+                                MessageBoxIcon.Information);
+            }
+            catch (Exception exClipboard)
+            {
+                MessageBox.Show($"Error copying prompt to clipboard or displaying prompt: {exClipboard.Message}",
+                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GenerateDefaultAiPrompt(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+        {
+            if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null) return null;
+
+            var dbDialectString = dialect.ToString();
             var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
                                               ? translated
                                               : targetMessage.Text;
@@ -1387,37 +1476,17 @@ namespace NppDB
             promptBuilder.AppendLine($"1.  Database Dialect: {dbDialectString}");
             promptBuilder.AppendLine("2.  SQL Query:");
             promptBuilder.AppendLine(fullQuery.Trim());
-            promptBuilder.AppendLine();
             promptBuilder.AppendLine($"3.  Analysis Feedback (Warning/Error): \"{translatedAnalysisMessage}\"");
             promptBuilder.AppendLine($"4.  Location of Issue: Line {targetMessage.StartLine}, Column {targetMessage.StartColumn + 1}.");
             promptBuilder.AppendLine("    (The issue is around this part of the code:)");
             promptBuilder.AppendLine(codeSnippet);
             promptBuilder.AppendLine();
-            promptBuilder.AppendLine("Please, using a clear, numbered step-by-step thought process:");
+            promptBuilder.AppendLine("Please:");
             promptBuilder.AppendLine($"a. Explain what this feedback message means in the context of my query and the {dbDialectString} dialect.");
             promptBuilder.AppendLine("b. Identify the most likely cause(s) of this issue in my query.");
             promptBuilder.AppendLine("c. Provide specific, corrected SQL code snippet(s) to resolve the issue.");
             promptBuilder.AppendLine("d. If applicable, suggest any SQL best practices related to this problem to avoid it in the future.");
-
-            var generatedPrompt = promptBuilder.ToString();
-
-            try
-            {
-                Clipboard.SetText(generatedPrompt);
-
-                var dialogMessage = "AI debug prompt copied to clipboard!\n\n" +
-                                    "--- Prompt Content: ---\n" +
-                                    generatedPrompt;
-
-                MessageBox.Show(dialogMessage,
-                                PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
-                                MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error copying prompt to clipboard or displaying prompt: {ex.Message}",
-                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            return promptBuilder.ToString();
         }
     }
 }

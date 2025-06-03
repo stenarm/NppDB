@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Linq;
 using System.Windows.Forms;
+using static NppDB.Core.DbServerManager;
 
 namespace NppDB.Core
 {
-    public partial class frmSelectDbType : Form
+    public partial class FrmSelectDbType : Form
     {
-        public frmSelectDbType()
+        public FrmSelectDbType()
         {
             InitializeComponent();
         }
 
         private void frmSelectDbType_Load(object sender, EventArgs e)
         {
-            cbxDbTypes.Items.AddRange(DBServerManager.Instance.GetDatabaseTypes().ToArray());
+            cbxDbTypes.Items.AddRange(Instance.GetDatabaseTypes().ToArray());
             if(cbxDbTypes.Items.Count> 0) cbxDbTypes.SelectedIndex = 0;
         }
 

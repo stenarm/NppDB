@@ -11,11 +11,11 @@ using NppDB.Comm;
 
 namespace NppDB.Core
 {
-    public class DBServerManager 
+    public class DbServerManager 
     {
         private readonly List<IDbConnect> _dbConnects = new List<IDbConnect>();
 
-        private DBServerManager()
+        private DbServerManager()
         {
             LoadConnectTypes();
         }
@@ -24,9 +24,7 @@ namespace NppDB.Core
         {
             if (_dbConnects.Any(x => x.Title.Equals(dbConnect.Title))) 
                 throw new ApplicationException("Connection Name exists!");
-           
-            //retrieve DB list
-            //retrieve Table list for each DB 
+
             _dbConnects.Add(dbConnect);
         }
 
@@ -37,17 +35,21 @@ namespace NppDB.Core
 
         public void Refresh()
         {
-            _dbConnects.AsParallel().ForAll(x =>{try { x.Refresh(); } catch { }});
+            _dbConnects.AsParallel().ForAll(x =>{try { x.Refresh(); }
+                catch
+                {
+                }
+            });
         }
 
-        public IEnumerable<IDbConnect> Connections { get { return _dbConnects; } }
+        public IEnumerable<IDbConnect> Connections => _dbConnects;
 
         public void SaveToXml(string path)
         {
             var dir = Path.GetDirectoryName(path);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(path);
 
-            XmlDocument xdoc = new XmlDocument();
+            var xdoc = new XmlDocument();
             XmlNode xconnects = xdoc.CreateElement("connects");
             xdoc.AppendChild(xconnects);
 
@@ -57,7 +59,7 @@ namespace NppDB.Core
                 var serializer = new XmlSerializer(connect.GetType(), GetXmlOver());
                 serializer.Serialize(sw, connect);
                 sw.Flush();
-                XmlDocument xd = new XmlDocument();
+                var xd = new XmlDocument();
                 xd.LoadXml(sw.ToString());
                 var xcnn = xdoc.ImportNode(xd.DocumentElement, true);
                 xcnn.Attributes.RemoveAll();
@@ -66,10 +68,9 @@ namespace NppDB.Core
             xdoc.Save(path);
         }
 
-        //except TreeNode's Property
         private XmlAttributeOverrides GetXmlOver()
         {
-            XmlAttributeOverrides xmlOver = new XmlAttributeOverrides();
+            var xmlOver = new XmlAttributeOverrides();
             foreach (var prop in typeof(TreeNode).GetProperties())
             {
                 xmlOver.Add(typeof(TreeNode), prop.Name, new XmlAttributes { XmlIgnore = true });
@@ -88,15 +89,15 @@ namespace NppDB.Core
             try
             {
                 var conns = new List<IDbConnect>();
-                foreach (var dbTyp in _dbTypes)
+                foreach (var conn in from dbTyp in _dbTypes from XmlNode node in xdoc.SelectNodes(@"//connects/" + dbTyp.ConnectType.Name) let serializer = new XmlSerializer(dbTyp.ConnectType, GetXmlOver()) select serializer.Deserialize(new StringReader(node.OuterXml)) as IDbConnect)
                 {
-                    foreach (XmlNode node in xdoc.SelectNodes(@"//connects/" + dbTyp.ConnectType.Name))
+                    if (NppCommandHost != null && conn is INppDBCommandClient client)
+                        client.SetCommandHost(NppCommandHost);
+                    if (conn != null)
                     {
-                        XmlSerializer serializer = new XmlSerializer(dbTyp.ConnectType, GetXmlOver());
-                        var conn = serializer.Deserialize(new StringReader(node.OuterXml)) as IDbConnect;
-                        if (NppCommandHost != null && conn is INppDBCommandClient) ((INppDBCommandClient)conn).SetCommandHost(NppCommandHost);
-                        conns.Add(conn);
+                        conn.CommandHost = NppCommandHost;
                     }
+                    conns.Add(conn);
                 }
 
                 _dbConnects.Clear();
@@ -104,7 +105,9 @@ namespace NppDB.Core
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.InnerException.Message + "\n" + ex.InnerException.StackTrace, (ex.InnerException != null).ToString());
+                if (ex.InnerException != null)
+                    MessageBox.Show(ex.InnerException.Message + "\n" + ex.InnerException.StackTrace,
+                        (ex.InnerException != null).ToString());
             }
         }
 
@@ -112,8 +115,12 @@ namespace NppDB.Core
 
         public IDbConnect CreateConnect(DatabaseType databaseType)
         {
-            var connect = databaseType.ConnectType.Assembly.CreateInstance(databaseType.ConnectType.FullName) as IDbConnect;
-            if (NppCommandHost != null && connect is INppDBCommandClient) ((INppDBCommandClient)connect).SetCommandHost(NppCommandHost);
+            var connect = databaseType.ConnectType.Assembly.CreateInstance(databaseType.ConnectType.FullName ?? string.Empty) as IDbConnect;
+            if (NppCommandHost != null && connect is INppDBCommandClient client) client.SetCommandHost(NppCommandHost);
+            if (connect != null)
+            {
+                connect.CommandHost = NppCommandHost;
+            }
             return connect;
         }
 
@@ -122,10 +129,11 @@ namespace NppDB.Core
             return _dbTypes;
         }
 
-        private List<DatabaseType> _dbTypes = new List<DatabaseType>();
+        private readonly List<DatabaseType> _dbTypes = new List<DatabaseType>();
         private void LoadConnectTypes()
         {
             var dir = Path.GetDirectoryName(Uri.UnescapeDataString(new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath));
+            if (dir == null) return;
             foreach (var filePath in Directory.GetFiles(dir, "*.dll"))
             {
                 Assembly assem;
@@ -143,12 +151,10 @@ Error: {e}");
                 foreach (var typ in assem.GetTypes())
                 {
                     if (!typ.IsClass) continue;
-                    
+
                     foreach (var attr in typ.GetCustomAttributes(typeof(ConnectAttr), false))
                     {
-                        //System.Windows.Forms.MessageBox.Show($"Path: {dir}\nFile: {filePath}\nType: {typ}\nAttr: {attr}");
-                        var cnattr = attr as ConnectAttr;
-                        if (cnattr == null) continue;
+                        if (!(attr is ConnectAttr cnattr)) continue;
 
                         _dbTypes.Add(new DatabaseType { Conn = cnattr, ConnectType = typ });
                     }
@@ -156,21 +162,14 @@ Error: {e}");
             }
         }
 
-        private static DBServerManager _svrMan;
-        public static DBServerManager Instance
-        {
-            get
-            {
-                if (_svrMan == null) _svrMan = new DBServerManager();
-                return _svrMan;
-            }
-        }
+        private static DbServerManager _svrMan;
+        public static DbServerManager Instance => _svrMan ?? (_svrMan = new DbServerManager());
     }
 
     public class DatabaseType
     {
-        public string Id { get { return Conn.Id; } }
-        public string Title { get { return Conn.Title; } }
+        public string Id => Conn.Id;
+        private string Title => Conn.Title;
         internal ConnectAttr Conn { get; set; }
         internal Type ConnectType { get; set; }
         

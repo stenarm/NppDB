@@ -17,5 +17,6 @@
         bool IsOpened { get; }
         string DatabaseSystemName { get; }
         SqlDialect Dialect { get; }
+        INppDbCommandHost CommandHost { get; set; }
     }
 }

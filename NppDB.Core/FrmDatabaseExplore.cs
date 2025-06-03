@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -47,10 +48,10 @@ namespace NppDB.Core
             trvDBList.ImageList.Images.Add("Column_1110", Resources.column1110);
             trvDBList.ImageList.Images.Add("Column_1111", Resources.column1111);
 
-            foreach (var dbcnn in DBServerManager.Instance.Connections)
+            foreach (var dbcnn in DbServerManager.Instance.Connections)
             {
                 var node = dbcnn as TreeNode;
-                var id = DBServerManager.Instance.GetDatabaseTypes().First(x => x.ConnectType == dbcnn.GetType()).Id;
+                var id = DbServerManager.Instance.GetDatabaseTypes().First(x => x.ConnectType == dbcnn.GetType()).Id;
                 SetTreeNodeImage(node, id);
             
                 trvDBList.Nodes.Add((TreeNode)dbcnn);
@@ -98,10 +99,10 @@ namespace NppDB.Core
 
         private void RegisterConnect()
         {
-            var dlg = new frmSelectDbType();
+            var dlg = new FrmSelectDbType();
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
             var selDbType = dlg.SelectedDatabaseType;
-            var dbConnection = DBServerManager.Instance.CreateConnect(selDbType);
+            var dbConnection = DbServerManager.Instance.CreateConnect(selDbType);
 
             bool checkLoginResult;
             try
@@ -120,10 +121,10 @@ namespace NppDB.Core
             }
 
             var tmpName = dbConnection.GetDefaultTitle();
-            var existingCount = DBServerManager.Instance.Connections.Count(x => x.Title.StartsWith(tmpName));
+            var existingCount = DbServerManager.Instance.Connections.Count(x => x.Title.StartsWith(tmpName));
             dbConnection.Title = tmpName + (existingCount == 0 ? "" : "(" + existingCount + ")");
 
-            DBServerManager.Instance.Register(dbConnection);
+            DbServerManager.Instance.Register(dbConnection);
             var id = selDbType.Id;
             var node = dbConnection as TreeNode;
             if (node != null)
@@ -206,7 +207,7 @@ namespace NppDB.Core
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error expanding node '{e.Node.Text}':\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error expanding node '{e.Node.Text}':\n{ex.Message}", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     e.Cancel = true;
                 }
                 finally
@@ -322,7 +323,7 @@ namespace NppDB.Core
                     if (pgConnection.IsOpened)
                     {
                         MessageBox.Show(this, "Connection properties have been updated.\n\nPlease disconnect and reconnect for these changes\nto take effect on the live database connection.",
-                            "Properties Changed",
+                            @"Properties Changed",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
                     }
@@ -330,14 +331,14 @@ namespace NppDB.Core
                 catch (Exception ex)
                 {
                     MessageBox.Show(this, $"Error opening connection properties:\n{ex.Message}",
-                                    "Error",
+                                    @"Error",
                                     MessageBoxButtons.OK,
                                     MessageBoxIcon.Error);
                 }
             }
             else
             {
-                MessageBox.Show(this, "The selected item is not a PostgreSQL connection.", "Cannot Edit Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show(this, @"The selected item is not a PostgreSQL connection.", @"Cannot Edit Connection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -357,7 +358,48 @@ namespace NppDB.Core
             shortcutText.AppendLine("DB Connect Manager:               F10");
 
             MessageBox.Show(
-                this, shortcutText.ToString(), "NppDB Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this, shortcutText.ToString(), @"NppDB Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void btnEditAiPromptTemplate_Click(object sender, EventArgs e)
+        {
+            IDbConnect selectedConnection = null;
+            if (trvDBList.SelectedNode is IDbConnect connectNode)
+            {
+                selectedConnection = connectNode;
+            }
+            else if (trvDBList.SelectedNode != null && GetRootParent(trvDBList.SelectedNode) is IDbConnect rootConnectNode)
+            {
+                selectedConnection = rootConnectNode;
+            }
+            else if (DbServerManager.Instance.Connections.Any())
+            {
+                selectedConnection = DbServerManager.Instance.Connections.First();
+            }
+
+            if (selectedConnection?.CommandHost == null)
+            {
+                MessageBox.Show("Cannot determine plugin context to open the template file. Please ensure a database connection is registered.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            var pluginDirObj = selectedConnection.CommandHost.Execute(NppDbCommandType.GET_PLUGIN_DIRECTORY, null);
+            if (!(pluginDirObj is string pluginDirectoryPath) || string.IsNullOrEmpty(pluginDirectoryPath))
+            {
+                MessageBox.Show("Could not retrieve plugin directory path from the command host.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            var templateFilePath = Path.Combine(pluginDirectoryPath, "AIPromptTemplate.txt");
+
+
+            if (!File.Exists(templateFilePath))
+            {
+                MessageBox.Show($"AI prompt template file not found at:\n{templateFilePath}\n\nA new empty file will be created if you save.",
+                                "Template Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            selectedConnection.CommandHost.Execute(NppDbCommandType.OPEN_FILE_IN_NPP, new object[] { templateFilePath });
         }
     }
 }

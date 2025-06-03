@@ -44,7 +44,7 @@ namespace NppDB.Core
                     break;
                 default:
                     SelectedDialect = SqlDialect.NONE;
-                    MessageBox.Show("Please select a SQL dialect from the list.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Please select a SQL dialect from the list.", @"Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     DialogResult = DialogResult.None;
                     return;
             }

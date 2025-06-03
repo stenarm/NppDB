@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace NppDB.Core
 {
-    partial class frmSelectDbType
+    partial class FrmSelectDbType
     {
         /// <summary>
         /// Required designer variable.
@@ -79,7 +79,7 @@ namespace NppDB.Core
             this.Controls.Add(this.cbxDbTypes);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "frmSelectDbType";
+            this.Name = "FrmSelectDbType";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;

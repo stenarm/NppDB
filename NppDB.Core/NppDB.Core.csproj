@@ -217,6 +217,7 @@
     <Content Include="Resources\gui_eraser1.png" />
     <Content Include="Resources\keyboard1.png" />
     <Content Include="Resources\keyboard11.png" />
+    <Content Include="Resources\page_file.png" />
     <Content Include="Resources\shortcut.png" />
     <Content Include="Resources\shortcuts.png" />
     <Content Include="Resources\shortcuts1.png" />
