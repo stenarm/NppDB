@@ -118,6 +118,7 @@ namespace Kbg.NppPluginNET.PluginInfrastructure
         {
             MOVE = 0x0003,
             SIZE = 0x0005,
+            SIZING = 0x0214,
             MOVING = 0x0216,
             ENTER_SIZE_MOVE = 0x0231,
             EXIT_SIZE_MOVE = 0x0232,

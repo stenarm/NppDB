@@ -121,19 +121,40 @@ namespace NppDB
             nbF = _funcItems.Items.Count; 
             return _funcItems.NativePointer;
         }
-        public bool MessageProc(uint message) {
-             switch ((Win32.Wm)message) {
-                 case Win32.Wm.MOVE: case Win32.Wm.MOVING: case Win32.Wm.SIZE:
-                 case Win32.Wm.ENTER_SIZE_MOVE: case Win32.Wm.EXIT_SIZE_MOVE:
-                     UpdateCurrentSqlResult(); break;
-                 case Win32.Wm.NOTIFY:
-                     break;
-                 case Win32.Wm.COMMAND:
-                     break;
-                 default:
-                     throw new ArgumentOutOfRangeException(nameof(message), message, null);
-             } 
-             return false; 
+        public uint MessageProc(uint message, IntPtr wParam, IntPtr lParam)
+        {
+            if (nppData._nppHandle == IntPtr.Zero && message != (uint)NppMsg.NPPM_GETPLUGINSCONFIGDIR)
+            {
+                return 1;
+            }
+            try
+            {
+                switch ((Win32.Wm)message)
+                {
+                    case Win32.Wm.MOVE:
+                    case Win32.Wm.MOVING:
+                    case Win32.Wm.SIZE:
+                    case Win32.Wm.SIZING:
+                    case Win32.Wm.ENTER_SIZE_MOVE:
+                    case Win32.Wm.EXIT_SIZE_MOVE:
+                        UpdateCurrentSqlResult();
+                        break;
+                    case Win32.Wm.NOTIFY:
+                        break;
+                    case Win32.Wm.COMMAND:
+                        break;
+                    default:
+                        return 1;
+                }
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"NppDB Plugin Error in messageProc (Message: {message}):\n{ex}",
+                                PLUGIN_NAME + " - Runtime Error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 1;
+            }
         }
         private IntPtr _ptrPluginName = IntPtr.Zero;
 
@@ -142,19 +163,22 @@ namespace NppDB
             if (_ptrPluginName == IntPtr.Zero) _ptrPluginName = Marshal.StringToHGlobalUni(PLUGIN_NAME); 
             return _ptrPluginName;
         }
-        public void BeNotified(ScNotification nc) {
-             switch (nc.Header.Code) {
-                 case (uint)NppMsg.NPPN_TBMODIFICATION: _funcItems.RefreshItems(); SetToolBarIcons(); break;
-                 case (uint)NppMsg.NPPN_SHUTDOWN: FinalizePlugin(); break;
-                 case (uint)NppMsg.NPPN_FILECLOSED: CloseSqlResult(nc.Header.IdFrom); break;
-                 case (uint)NppMsg.NPPN_BUFFERACTIVATED:
-                     break;
-                 case (uint)SciMsg.SCN_UPDATEUI:
-                     ReadTranslations(); break;
-                 case (uint)SciMsg.SCN_PAINTED: UpdateCurrentSqlResult(); break;
-                 case (uint)SciMsg.SCN_DWELLSTART: ShowTip(nc.Position); break;
-                 case (uint)SciMsg.SCN_DWELLEND: CloseTip(); break;
-             } }
+        public void BeNotified(ScNotification nc)
+        {
+            switch (nc.Header.Code) {
+                case (uint)NppMsg.NPPN_TBMODIFICATION: _funcItems.RefreshItems(); SetToolBarIcons(); break;
+                case (uint)NppMsg.NPPN_SHUTDOWN: FinalizePlugin(); break;
+                case (uint)NppMsg.NPPN_FILECLOSED: CloseSqlResult(nc.Header.IdFrom); break;
+                case (uint)NppMsg.NPPN_BUFFERACTIVATED:
+                    UpdateCurrentSqlResult();
+                    break;
+                case (uint)SciMsg.SCN_UPDATEUI:
+                    ReadTranslations();
+                    break;
+                case (uint)SciMsg.SCN_DWELLSTART: ShowTip(nc.Position); break;
+                case (uint)SciMsg.SCN_DWELLEND: CloseTip(); break;
+            }
+        }
         #endregion
 
         #region initialize and finalize a plugin
@@ -867,14 +891,12 @@ namespace NppDB
                 try { editor.AnnotationSetVisible(AnnotationVisible.BOXED); }
                 catch
                 {
-                    // ignored
                 }
             }
 
             try { editor.SetMouseDwellTime(500); }
             catch
             {
-                // ignored
             }
         }
 
@@ -1117,31 +1139,31 @@ namespace NppDB
         
         private void CloseCurrentSqlResult() { var bufId = GetCurrentBufferId(); CloseSqlResult(bufId); }
 
-         private void CloseSqlResult(IntPtr bufferId)
-         {
-             var result = SQLResultManager.Instance.GetSQLResult(bufferId);
-             if (result == null) return;
+        private void CloseSqlResult(IntPtr bufferId)
+        {
+            var result = SQLResultManager.Instance.GetSQLResult(bufferId);
+            if (result == null) return;
 
-             SQLResultManager.Instance.Remove(bufferId);
+            SQLResultManager.Instance.Remove(bufferId);
 
-             var wasCurrentControl = (_currentCtr == result);
+            var wasCurrentControl = (_currentCtr == result);
 
-             if (wasCurrentControl)
-             {
-                 _currentCtr = null;
-             }
+            if (wasCurrentControl)
+            {
+                _currentCtr = null;
+            }
 
-             if (result.IsHandleCreated && !result.IsDisposed)
-             {
-                 ResetViewPos();
-             }
+            if (result.IsHandleCreated && !result.IsDisposed)
+            {
+                ResetViewPos();
+            }
 
-             if (result.IsHandleCreated && !result.IsDisposed)
-                 Win32.DestroyWindow(result.Handle);
+            if (result.IsHandleCreated && !result.IsDisposed)
+                Win32.DestroyWindow(result.Handle);
 
-             if (!result.IsDisposed)
-                 result.Dispose();
-         }
+            if (!result.IsDisposed)
+                result.Dispose();
+        }
 
          private void Disconnect(IDbConnect connection)
          {
@@ -1210,10 +1232,10 @@ namespace NppDB
                  Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, toggleStatus);
              }
          }
-         private static void ShowAbout() { var dlg = new frmAbout(); dlg.ShowDialog(); }
+        private static void ShowAbout() { var dlg = new frmAbout(); dlg.ShowDialog(); }
 
-         private void UpdateCurrentSqlResult()
-        {
+        private void UpdateCurrentSqlResult()
+         {
             if (SQLResultManager.Instance == null) return;
 
             var bufId = GetCurrentBufferId();
@@ -1252,113 +1274,113 @@ namespace NppDB
             {
                 SetResultPos(_currentCtr);
             }
+         }
+        private static Control AddSqlResult(IntPtr bufId, IDbConnect connect, ISqlExecutor sqlExecutor)
+        {
+            var ctr = SQLResultManager.Instance.CreateSQLResult(bufId, connect, sqlExecutor);
+
+            var ret = Win32.SetParent(ctr.Handle, nppData._nppHandle);
+            if (ret == IntPtr.Zero) MessageBox.Show(@"setparent fail");
+
+            ctr.Visible = false;
+
+            return ctr;
         }
-         private static Control AddSqlResult(IntPtr bufId, IDbConnect connect, ISqlExecutor sqlExecutor)
-         {
-             var ctr = SQLResultManager.Instance.CreateSQLResult(bufId, connect, sqlExecutor);
+        private void ShowSqlResult(SqlResult control)
+        {
+            if (control == null || control.IsDisposed) return;
 
-             var ret = Win32.SetParent(ctr.Handle, nppData._nppHandle);
-             if (ret == IntPtr.Zero) MessageBox.Show(@"setparent fail");
+            _currentCtr = control;
 
-             ctr.Visible = false;
-
-             return ctr;
-         }
-         private void ShowSqlResult(SqlResult control)
-         {
-             if (control == null || control.IsDisposed) return;
-
-             _currentCtr = control;
-
-             SetResultPos(control);
+            SetResultPos(control);
 
 
-             if (!control.LinkedDbConnect.IsOpened)
-             {
-                 control.SetError("This database connection is closed. Please connect again.");
-             }
-         }
+            if (!control.LinkedDbConnect.IsOpened)
+            {
+                control.SetError("This database connection is closed. Please connect again.");
+            }
+        }
 
-         private static void NewFile()
-         {
-             Win32.SendMessage(nppData._nppHandle, (uint)Win32.Wm.COMMAND, (int)NppMenuCmd.IDM_FILE_NEW, 0);
-         }
-         private static IntPtr? GetCurrentAttachedBufferId()
-         {
-             var bufferId = GetCurrentBufferId();
+        private static void NewFile()
+        {
+            Win32.SendMessage(nppData._nppHandle, (uint)Win32.Wm.COMMAND, (int)NppMenuCmd.IDM_FILE_NEW, 0);
+        }
+        private static IntPtr? GetCurrentAttachedBufferId()
+        {
+            var bufferId = GetCurrentBufferId();
 
-             if (bufferId == IntPtr.Zero)
-             {
-                 return null;
-             }
+            if (bufferId == IntPtr.Zero)
+            {
+                return null;
+            }
 
-             var result = SQLResultManager.Instance.GetSQLResult(bufferId);
+            var result = SQLResultManager.Instance.GetSQLResult(bufferId);
 
-             if (result == null)
-             {
-                 return null;
-             }
+            if (result == null)
+            {
+                return null;
+            }
 
-             return bufferId;
-         }
-         private static void ActivateBufferId(int bufferId) { 
-             Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_ACTIVATEDOC, 0, bufferId);
-         }
+            return bufferId;
+        }
+        private static void ActivateBufferId(int bufferId) { 
+            Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_ACTIVATEDOC, 0, bufferId);
+        }
 
-         private static IntPtr GetCurrentBufferId()
-         {
-             return Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
-         }
-         private static void AppendToScintillaText(IntPtr scintillaHnd, string text)
-         {
-             if (scintillaHnd == IntPtr.Zero || string.IsNullOrEmpty(text))
-             {
-                 return;
-             }
+        private static IntPtr GetCurrentBufferId()
+        {
+            return Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_GETCURRENTBUFFERID, 0, 0);
+        }
+        private static void AppendToScintillaText(IntPtr scintillaHnd, string text)
+        {
+            if (scintillaHnd == IntPtr.Zero || string.IsNullOrEmpty(text))
+            {
+                return;
+            }
 
-             var codePage = Win32.SendMessage(scintillaHnd, SciMsg.SCI_GETCODEPAGE, 0, 0).ToInt32();
-             if (codePage == 0) codePage = 65001;
+            var codePage = Win32.SendMessage(scintillaHnd, SciMsg.SCI_GETCODEPAGE, 0, 0).ToInt32();
+            if (codePage == 0) codePage = 65001;
 
-             var ptrChars = IntPtr.Zero;
+            var ptrChars = IntPtr.Zero;
 
-             try
-             {
-                 var bytes = Encoding.GetEncoding(codePage).GetBytes(text);
+            try
+            {
+                var bytes = Encoding.GetEncoding(codePage).GetBytes(text);
 
-                 ptrChars = Marshal.AllocHGlobal(bytes.Length);
+                ptrChars = Marshal.AllocHGlobal(bytes.Length);
 
-                 Marshal.Copy(bytes, 0, ptrChars, bytes.Length);
+                Marshal.Copy(bytes, 0, ptrChars, bytes.Length);
 
-                 Win32.SendMessage(scintillaHnd, SciMsg.SCI_APPENDTEXT, (IntPtr)bytes.Length, ptrChars);
-             }
-             catch (Exception ex)
-             {
-                 throw new ApplicationException("Appending text to Scintilla (SCI_APPENDTEXT) failed.", ex);
-             }
-             finally
-             {
-                 if (ptrChars != IntPtr.Zero)
-                 {
-                     Marshal.FreeHGlobal(ptrChars);
-                 }
-             }
-         }
+                Win32.SendMessage(scintillaHnd, SciMsg.SCI_APPENDTEXT, (IntPtr)bytes.Length, ptrChars);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException("Appending text to Scintilla (SCI_APPENDTEXT) failed.", ex);
+            }
+            finally
+            {
+                if (ptrChars != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(ptrChars);
+                }
+            }
+        }
 
-         private void HandleCtrlF9ForAiPrompt()
-         {
-             var analysisInfoAvailable = _lastAnalysisResult != null && _lastEditor != null &&
-                                         ((_lastAnalysisResult.Errors != null && _lastAnalysisResult.Errors.Any(e => e != null)) ||
-                                          (_lastAnalysisResult.Commands != null && _lastAnalysisResult.Commands.Any(c => c != null &&
-                                              ((c.Warnings != null && c.Warnings.Any(w => w != null)) ||
-                                               (c.AnalyzeErrors != null && c.AnalyzeErrors.Any(ae => ae != null))))));
+        private void HandleCtrlF9ForAiPrompt()
+        {
+            var analysisInfoAvailable = _lastAnalysisResult != null && _lastEditor != null &&
+                                        ((_lastAnalysisResult.Errors != null && _lastAnalysisResult.Errors.Any(e => e != null)) ||
+                                         (_lastAnalysisResult.Commands != null && _lastAnalysisResult.Commands.Any(c => c != null &&
+                                             ((c.Warnings != null && c.Warnings.Any(w => w != null)) ||
+                                              (c.AnalyzeErrors != null && c.AnalyzeErrors.Any(ae => ae != null))))));
 
-             if (analysisInfoAvailable)
-             {
-                 GenerateAiPromptForFirstIssue();
-             }
-         }
+            if (analysisInfoAvailable)
+            {
+                GenerateAiPromptForFirstIssue();
+            }
+        }
 
-         private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+        private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
         {
             if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null)
             {
@@ -1375,7 +1397,7 @@ namespace NppDB
                 if (!File.Exists(templateFilePath))
                 {
                     MessageBox.Show($"AI prompt template file not found at: {templateFilePath}\nPlease ensure 'AIPromptTemplate.txt' exists in the NppDB plugin directory.",
-                                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
                     if (string.IsNullOrEmpty(generatedPrompt)) return;
                 }
@@ -1385,8 +1407,8 @@ namespace NppDB
 
                     var dbDialectString = dialect.ToString();
                     var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
-                                                      ? translated
-                                                      : targetMessage.Text;
+                        ? translated
+                        : targetMessage.Text;
                     if (string.IsNullOrEmpty(translatedAnalysisMessage))
                     {
                         translatedAnalysisMessage = targetMessage.Text ?? "N/A";
@@ -1417,7 +1439,7 @@ namespace NppDB
             catch (Exception exReadTemplate)
             {
                 MessageBox.Show($"Error reading or processing AI prompt template: {exReadTemplate.Message}\nFalling back to default prompt.",
-                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
                 if (string.IsNullOrEmpty(generatedPrompt)) return;
             }
@@ -1432,13 +1454,13 @@ namespace NppDB
                                     generatedPrompt;
 
                 MessageBox.Show(dialogMessage,
-                                PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
-                                MessageBoxIcon.Information);
+                    PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
             }
             catch (Exception exClipboard)
             {
                 MessageBox.Show($"Error copying prompt to clipboard or displaying prompt: {exClipboard.Message}",
-                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1448,8 +1470,8 @@ namespace NppDB
 
             var dbDialectString = dialect.ToString();
             var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
-                                              ? translated
-                                              : targetMessage.Text;
+                ? translated
+                : targetMessage.Text;
             if (string.IsNullOrEmpty(translatedAnalysisMessage))
             {
                 translatedAnalysisMessage = targetMessage.Text ?? "N/A";

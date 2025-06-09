@@ -1,13 +1,11 @@
-﻿// NPP plugin platform for .Net v0.94.00 by Kasper B. Graversen etc.
-
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using Kbg.NppPluginNET.PluginInfrastructure;
 using NppPlugin.DllExport;
 
-namespace NppDB //Kbg.NppPluginNET
+namespace NppDB
 {
-    static class UnmanagedExports
+    internal static class UnmanagedExports
     {
         private static readonly NppDbPlugin _plugin = new NppDbPlugin();
 
@@ -30,9 +28,9 @@ namespace NppDB //Kbg.NppPluginNET
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
-        static uint messageProc(uint message, UIntPtr wParam, IntPtr lParam)
+        static uint messageProc(uint message, IntPtr wParam, IntPtr lParam)
         {
-            return Convert.ToUInt32(_plugin.MessageProc(message));
+            return _plugin.MessageProc(message, wParam, lParam);
         }
 
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
@@ -44,8 +42,11 @@ namespace NppDB //Kbg.NppPluginNET
         [DllExport(CallingConvention = CallingConvention.Cdecl)]
         static void beNotified(IntPtr notifyCode)
         {
+            if (notifyCode == IntPtr.Zero)
+                return;
+
             var notification = (ScNotification)Marshal.PtrToStructure(notifyCode, typeof(ScNotification));
-            _plugin.BeNotified(notification);            
+            _plugin.BeNotified(notification);
         }
     }
 }
