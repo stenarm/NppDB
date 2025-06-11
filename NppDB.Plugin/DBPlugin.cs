@@ -674,7 +674,7 @@ namespace NppDB
         {
             if (_lastAnalysisResult == null || string.IsNullOrEmpty(_lastAnalyzedText) || _lastEditor == null)
             {
-                MessageBox.Show(@"Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(@"Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.None);
                 return;
             }
 
@@ -698,7 +698,7 @@ namespace NppDB
             }
             else
             {
-                MessageBox.Show(@"No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(@"No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.None);
             }
         }
 
@@ -1505,7 +1505,7 @@ namespace NppDB
 
                 MessageBox.Show(dialogMessage,
                     PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                    MessageBoxIcon.None);
             }
             catch (Exception exClipboard)
             {
