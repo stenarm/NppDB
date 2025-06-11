@@ -491,7 +491,7 @@ namespace NppDB
                 editor = _getCurrentEditor();
                 if (editor == null)
                 {
-                    MessageBox.Show("Could not get editor instance.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(@"Could not get editor instance.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -527,7 +527,7 @@ namespace NppDB
                 {
                     if (!attachedResult.LinkedDbConnect.IsOpened && !onlyAnalyze)
                     {
-                        MessageBox.Show("Database connection is closed. Cannot execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show(@"Database connection is closed. Cannot execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
@@ -585,11 +585,29 @@ namespace NppDB
                      _lastEditor = editor;
                     return;
                 }
-
-
+                
                 var hasErrors = analysisResult.Errors?.Any() ?? false;
                 var hasWarns = analysisResult.Commands?.Any(c => c != null && ((c.Warnings?.Any() ?? false) || (c.AnalyzeErrors?.Any() ?? false))) ?? false;
 
+                var firstIssueLine = -1;
+                if (hasErrors)
+                {
+                    var firstError = analysisResult.Errors.Where(e => e != null).OrderBy(e => e.StartLine).ThenBy(e => e.StartColumn).FirstOrDefault();
+                    if (firstError != null) firstIssueLine = firstError.StartLine;
+                }
+                else if (hasWarns)
+                {
+                    var firstWarningMessage = analysisResult.Commands
+                        .Where(c => c != null)
+                        .SelectMany(c => (c.Warnings ?? Enumerable.Empty<ParserMessage>())
+                            .Concat(c.AnalyzeErrors ?? Enumerable.Empty<ParserMessage>()))
+                        .Where(m => m != null)
+                        .OrderBy(m => m.StartLine)
+                        .ThenBy(m => m.StartColumn)
+                        .FirstOrDefault();
+                    if (firstWarningMessage != null) firstIssueLine = firstWarningMessage.StartLine;
+                }
+                
                 if (showFeedbackOnSuccess || hasErrors || hasWarns)
                 {
                     DisplayAnalysisFeedback(editor, analysisResult, baseLine, selectionOnly);
@@ -597,10 +615,10 @@ namespace NppDB
                 else
                 {
                     ClearAnalysisIndicators(editor);
+                    attachedResult?.ClearAnalysisStatus();
                 }
 
-                attachedResult?.SetError(hasErrors ? "Analysis found errors." : (hasWarns ? "Analysis found warnings." : ""));
-
+                attachedResult?.SetAnalysisStatus(hasErrors, hasWarns, firstIssueLine);
                 _lastAnalysisResult = analysisResult;
                 _lastAnalyzedText = textToParse;
                 _lastUsedDialect = currentDialect;
@@ -612,12 +630,12 @@ namespace NppDB
                 }
                 if (hasErrors)
                 {
-                    MessageBox.Show("Execution cancelled due to parsing errors. Please fix the errors shown.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(@"Execution cancelled due to parsing errors. Please fix the errors shown.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
                 if (analysisResult.Commands == null || !analysisResult.Commands.Any())
                 {
-                    MessageBox.Show("No valid SQL commands found to execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(@"No valid SQL commands found to execute.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -631,10 +649,12 @@ namespace NppDB
                 {
                     attachedResult.SetError("");
                     attachedResult.Execute(commandsToExecute);
+                    attachedResult.ClearAnalysisStatus();
                 }
                 else
                 {
-                    MessageBox.Show("Could not determine specific command to execute based on selection or caret position.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(@"Could not determine specific command to execute based on selection or caret position.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    attachedResult.ClearAnalysisStatus();
                 }
             }
             catch (Exception ex)
@@ -654,7 +674,7 @@ namespace NppDB
         {
             if (_lastAnalysisResult == null || string.IsNullOrEmpty(_lastAnalyzedText) || _lastEditor == null)
             {
-                MessageBox.Show("Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(@"Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -678,7 +698,7 @@ namespace NppDB
             }
             else
             {
-                MessageBox.Show("No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(@"No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
@@ -958,7 +978,21 @@ namespace NppDB
 
         private void ClearAnalysis()
         {
-             ClearAnalysisIndicators(_getCurrentEditor());
+            var editor = _getCurrentEditor();
+            ClearAnalysisIndicators(editor);
+
+            var currentBufferId = GetCurrentBufferId();
+            if (currentBufferId != IntPtr.Zero)
+            {
+                var currentResultPanel = SQLResultManager.Instance.GetSQLResult(currentBufferId);
+                if (currentResultPanel != null && !currentResultPanel.IsDisposed)
+                {
+                    currentResultPanel.ClearAnalysisStatus();
+                }
+            }
+
+            _lastAnalysisResult = null;
+            _lastAnalyzedText = null;
         }
 
         public void SendNppMessage(uint msg, IntPtr wParam, int lParam)
@@ -1181,57 +1215,73 @@ namespace NppDB
          }
 
          private void ToggleDbManager()
-         {
-             if (_frmDbExplorer == null)
-             {
-                 _frmDbExplorer = new FrmDatabaseExplore(); 
-                 _frmDbExplorer.AddNotifyHandler((ref Message msg) =>
-                 {
-                     var nc = (ScNotification)Marshal.PtrToStructure(msg.LParam, typeof(ScNotification)); 
-                     if (nc.Header.Code != (uint)DockMgrMsg.DMN_CLOSE) return; 
-                     Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, 0);
-                 }); 
-                 _frmDbExplorer.DisconnectHandler = Disconnect; _frmDbExplorer.UnregisterHandler = Unregister;
-                 using (var newBmp = new Bitmap(16, 16))
-                 {
-                     var g = Graphics.FromImage(newBmp); 
-                     var colorMap = new ColorMap[1]; 
-                     colorMap[0] = new ColorMap
-                     {
-                         OldColor = Color.Fuchsia,
-                         NewColor = Color.FromKnownColor(KnownColor.ButtonFace)
-                     };
-                     var attr = new ImageAttributes(); 
-                     attr.SetRemapTable(colorMap); 
-                     g.DrawImage(_imgMan, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr); 
-                     _tbIcon = Icon.FromHandle(newBmp.GetHicon());
-                 } 
-                 var nppTbData = new NppTbData
-                 {
-                     hClient = _frmDbExplorer.Handle,
-                     pszName = _funcItems.Items[_cmdFrmDbExplorerIdx]._itemName,
-                     dlgID = _cmdFrmDbExplorerIdx,
-                     uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR,
-                     hIconTab = (uint)_tbIcon.Handle,
-                     pszModuleName = PLUGIN_NAME
-                 };
-                 var ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(nppTbData)); 
-                 Marshal.StructureToPtr(nppTbData, ptrNppTbData, false); 
-                 Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, ptrNppTbData); 
-                 Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, 1); 
-                 Marshal.FreeHGlobal(ptrNppTbData);
-             }
-             else
-             {
-                 var nppMsg = NppMsg.NPPM_DMMSHOW; var toggleStatus = 1;
-                 if (_frmDbExplorer.Visible)
-                 {
-                     nppMsg = NppMsg.NPPM_DMMHIDE; toggleStatus = 0;
-                 } 
-                 Win32.SendMessage(nppData._nppHandle, (uint)nppMsg, 0, _frmDbExplorer.Handle); 
-                 Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, toggleStatus);
-             }
-         }
+        {
+            try
+            {
+
+                if (_frmDbExplorer == null || _frmDbExplorer.IsDisposed)
+                {
+                    _frmDbExplorer = new FrmDatabaseExplore(this);
+
+                    _frmDbExplorer.AddNotifyHandler((ref Message msg) =>
+                    {
+                        var nc = (ScNotification)Marshal.PtrToStructure(msg.LParam, typeof(ScNotification));
+                        if (nc.Header.Code != (uint)DockMgrMsg.DMN_CLOSE) return;
+                        Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, 0);
+                    });
+
+                    _frmDbExplorer.DisconnectHandler = Disconnect;
+                    _frmDbExplorer.UnregisterHandler = Unregister;
+
+                    using (var newBmp = new Bitmap(16, 16))
+                    {
+                        var g = Graphics.FromImage(newBmp);
+                        var colorMap = new ColorMap[1];
+                        colorMap[0] = new ColorMap
+                        {
+                            OldColor = Color.Fuchsia,
+                            NewColor = Color.FromKnownColor(KnownColor.ButtonFace)
+                        };
+                        var attr = new ImageAttributes();
+                        attr.SetRemapTable(colorMap);
+                        g.DrawImage(_imgMan, new Rectangle(0, 0, 16, 16), 0, 0, 16, 16, GraphicsUnit.Pixel, attr);
+                        _tbIcon = Icon.FromHandle(newBmp.GetHicon());
+                    }
+
+                    var nppTbData = new NppTbData
+                    {
+                        hClient = _frmDbExplorer.Handle,
+                        pszName = _funcItems.Items[_cmdFrmDbExplorerIdx]._itemName,
+                        dlgID = _cmdFrmDbExplorerIdx,
+                        uMask = NppTbMsg.DWS_DF_CONT_RIGHT | NppTbMsg.DWS_ICONTAB | NppTbMsg.DWS_ICONBAR,
+                        hIconTab = (uint)_tbIcon.Handle,
+                        pszModuleName = PLUGIN_NAME
+                    };
+
+                    var ptrNppTbData = Marshal.AllocHGlobal(Marshal.SizeOf(nppTbData));
+                    Marshal.StructureToPtr(nppTbData, ptrNppTbData, false);
+                    Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_DMMREGASDCKDLG, 0, ptrNppTbData);
+                    Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, 1);
+                    Marshal.FreeHGlobal(ptrNppTbData);
+                }
+                else
+                {
+                    var nppMsg = NppMsg.NPPM_DMMSHOW; var toggleStatus = 1;
+                    if (_frmDbExplorer.Visible)
+                    {
+                        nppMsg = NppMsg.NPPM_DMMHIDE; toggleStatus = 0;
+                    }
+                    Win32.SendMessage(nppData._nppHandle, (uint)nppMsg, 0, _frmDbExplorer.Handle);
+                    Win32.SendMessage(nppData._nppHandle, (uint)NppMsg.NPPM_SETMENUITEMCHECK, _funcItems.Items[_cmdFrmDbExplorerIdx]._cmdID, toggleStatus);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"CRITICAL Error in ToggleDbManager():\nMessage: {ex.Message}\nStackTrace:\n{ex.StackTrace}",
+                                PLUGIN_NAME + " - ToggleDbManager CRASH", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _frmDbExplorer = null;
+            }
+        }
         private static void ShowAbout() { var dlg = new frmAbout(); dlg.ShowDialog(); }
 
         private void UpdateCurrentSqlResult()

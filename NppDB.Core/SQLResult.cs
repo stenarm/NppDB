@@ -264,6 +264,68 @@ namespace NppDB.Core
                 row.HeaderCell.Value = idx++.ToString();
             }
         }
+        
+        public void SetAnalysisStatus(bool hasErrors, bool hasWarnings, int firstIssueLine = -1)
+        {
+            if (lblError == null) return;
+
+            string statusMessage;
+            Color statusColor;
+            var showStatus = false;
+
+            if (hasErrors)
+            {
+                statusMessage = "Analysis found errors.";
+                statusColor = Color.Red;
+                showStatus = true;
+                if (firstIssueLine > 0)
+                {
+                    statusMessage += $" First error near L{firstIssueLine}.";
+                }
+            }
+            else if (hasWarnings)
+            {
+                statusMessage = "Analysis found warnings.";
+                statusColor = Color.Orange;
+                showStatus = true;
+                if (firstIssueLine > 0)
+                {
+                    statusMessage += $" First warning near L{firstIssueLine}.";
+                }
+            }
+            else
+            {
+                statusMessage = "Analysis complete. No issues found.";
+                statusColor = SystemColors.ControlText;
+            }
+
+            if (showStatus)
+            {
+                lblError.Text = statusMessage;
+                lblError.ForeColor = statusColor;
+                lblError.Visible = true;
+                tspMain.Visible = false;
+                tclSqlResult.Visible = false;
+            }
+            else
+            {
+                lblError.Visible = false;
+                tspMain.Visible = true;
+                tclSqlResult.Visible = true;
+            }
+        }
+        
+        public void ClearAnalysisStatus()
+        {
+            if (lblError == null) return;
+
+            lblError.Text = string.Empty;
+            lblError.Visible = false;
+
+            tspMain.Visible = true;
+            tclSqlResult.Visible = true;
+        }
+
         private static void AdjustResizeColumnRow(DataGridView dgv)
         {
             dgv.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
@@ -285,7 +347,7 @@ namespace NppDB.Core
 
             if (connect.DatabaseSystemName != null && connect.DatabaseSystemName.StartsWith("PostgreSQL", StringComparison.OrdinalIgnoreCase))
             {
-                lblAccount.Text = $"Username: {connect.Account}";
+                lblAccount.Text = $@"Username: {connect.Account}";
                 lblAccount.Visible = !string.IsNullOrEmpty(connect.Account);
                 sepAccount.Visible = lblAccount.Visible;
             }
@@ -298,7 +360,7 @@ namespace NppDB.Core
 
             if (connect is PostgreSqlConnect pgConnect)
             {
-                lblDatabase.Text = $"Database: {pgConnect.Database}";
+                lblDatabase.Text = $@"Database: {pgConnect.Database}";
                 lblDatabase.Visible = !string.IsNullOrEmpty(pgConnect.Database);
                 sepDatabase.Visible = lblDatabase.Visible;
             }
@@ -315,19 +377,23 @@ namespace NppDB.Core
 
         public void SetError(string message)
         {
+            if (lblError == null) return;
+
             if (string.IsNullOrEmpty(message))
             {
                 lblError.Visible = false;
                 tspMain.Visible = true;
                 tclSqlResult.Visible = true;
+                lblError.Text = "";
             }
             else
             {
+                lblError.Text = message;
+                lblError.ForeColor = Color.Brown;
                 lblError.Visible = true;
                 tspMain.Visible = false;
                 tclSqlResult.Visible = false;
             }
-            lblError.Text = message;
         }
 
         public ParserResult Parse(string sql, CaretPosition caretPosition)

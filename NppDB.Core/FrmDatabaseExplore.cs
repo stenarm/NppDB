@@ -13,61 +13,65 @@ namespace NppDB.Core
 
     public partial class FrmDatabaseExplore : Form
     {
-        public FrmDatabaseExplore()
+        private readonly INppDbCommandHost _commandHostInstance;
+        public FrmDatabaseExplore(INppDbCommandHost commandHost)
         {
             InitializeComponent();
+            _commandHostInstance = commandHost;
             Init();
         }
 
         private void Init()
         {
-            trvDBList.ImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit };
-            trvDBList.ImageList.Images.Add(Resources.bullet);
-            trvDBList.ImageList.Images.Add("Group", Resources.Folder);
-            trvDBList.ImageList.Images.Add("Database", Resources.Database);
-            trvDBList.ImageList.Images.Add("Table", Resources.Table);
-
-            trvDBList.ImageList.Images.Add("Primary_Key", Resources.primaryKey);
-            trvDBList.ImageList.Images.Add("Foreign_Key", Resources.foreignKey);
-            trvDBList.ImageList.Images.Add("Index", Resources.index);
-            trvDBList.ImageList.Images.Add("Unique_Index", Resources.uniqueIndex);
-            trvDBList.ImageList.Images.Add("Column_0000", Resources.column0000);
-            trvDBList.ImageList.Images.Add("Column_0001", Resources.column0001);
-            trvDBList.ImageList.Images.Add("Column_0010", Resources.column0010);
-            trvDBList.ImageList.Images.Add("Column_0011", Resources.column0011);
-            trvDBList.ImageList.Images.Add("Column_0100", Resources.column0100);
-            trvDBList.ImageList.Images.Add("Column_0101", Resources.column0101);
-            trvDBList.ImageList.Images.Add("Column_0110", Resources.column0110);
-            trvDBList.ImageList.Images.Add("Column_0111", Resources.column0111);
-            trvDBList.ImageList.Images.Add("Column_1000", Resources.column1000);
-            trvDBList.ImageList.Images.Add("Column_1001", Resources.column1001);
-            trvDBList.ImageList.Images.Add("Column_1010", Resources.column1010);
-            trvDBList.ImageList.Images.Add("Column_1011", Resources.column1011);
-            trvDBList.ImageList.Images.Add("Column_1100", Resources.column1100);
-            trvDBList.ImageList.Images.Add("Column_1101", Resources.column1101);
-            trvDBList.ImageList.Images.Add("Column_1110", Resources.column1110);
-            trvDBList.ImageList.Images.Add("Column_1111", Resources.column1111);
-
-            foreach (var dbcnn in DbServerManager.Instance.Connections)
+            try
             {
-                var node = dbcnn as TreeNode;
-                var id = DbServerManager.Instance.GetDatabaseTypes().First(x => x.ConnectType == dbcnn.GetType()).Id;
-                SetTreeNodeImage(node, id);
-            
-                trvDBList.Nodes.Add((TreeNode)dbcnn);
-            }
 
-            btnRegister.Enabled = true;
-            btnUnregister.Enabled = false;
-            btnConnect.Enabled = false;
-            btnDisconnect.Enabled = false;
-            btnRefresh.Enabled = false;
-            
-            if (trvDBList.TopNode != null)
-                trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
-            
-            trvDBList.ShowNodeToolTips = true;
-            trvDBList.BeforeExpand += trvDBList_BeforeExpand;
+                trvDBList.ImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit };
+                trvDBList.ImageList.Images.Add("Database", Resources.Database);
+
+                if (DbServerManager.Instance == null)
+                {
+                    return;
+                }
+                if (DbServerManager.Instance.Connections == null)
+                {
+                    return;
+                }
+
+                foreach (var dbcnn in DbServerManager.Instance.Connections)
+                {
+                    if (!(dbcnn is TreeNode node))
+                    {
+                         continue;
+                    }
+
+                    var dbTypes = DbServerManager.Instance.GetDatabaseTypes();
+
+                    var dbType = dbTypes?.FirstOrDefault(x => x != null && x.ConnectType == dbcnn.GetType());
+                    if (dbType == null) continue;
+                    SetTreeNodeImage(node, dbType.Id);
+                    trvDBList.Nodes.Add(node);
+                }
+
+                btnRegister.Enabled = true;
+                btnUnregister.Enabled = false;
+                btnConnect.Enabled = false;
+                btnDisconnect.Enabled = false;
+                btnRefresh.Enabled = false;
+
+                if (trvDBList.TopNode != null)
+                {
+                    trvDBList.ItemHeight = trvDBList.TopNode.Bounds.Height + 4;
+                }
+
+                trvDBList.ShowNodeToolTips = true;
+                trvDBList.BeforeExpand += trvDBList_BeforeExpand;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"CRITICAL Error during FrmDatabaseExplore.Init():\nMessage: {ex.Message}\nStackTrace:\n{ex.StackTrace}",
+                                "FrmDatabaseExplore Init CRASH", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private readonly List<NotifyHandler> _notifyHandlers = new List<NotifyHandler>();
@@ -358,48 +362,34 @@ namespace NppDB.Core
             shortcutText.AppendLine("DB Connect Manager:               F10");
 
             MessageBox.Show(
-                this, shortcutText.ToString(), @"NppDB Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this, shortcutText.ToString(), @"NppDB Shortcuts", MessageBoxButtons.OK, MessageBoxIcon.None);
         }
 
         private void btnEditAiPromptTemplate_Click(object sender, EventArgs e)
         {
-            IDbConnect selectedConnection = null;
-            if (trvDBList.SelectedNode is IDbConnect connectNode)
+            if (_commandHostInstance == null)
             {
-                selectedConnection = connectNode;
-            }
-            else if (trvDBList.SelectedNode != null && GetRootParent(trvDBList.SelectedNode) is IDbConnect rootConnectNode)
-            {
-                selectedConnection = rootConnectNode;
-            }
-            else if (DbServerManager.Instance.Connections.Any())
-            {
-                selectedConnection = DbServerManager.Instance.Connections.First();
-            }
-
-            if (selectedConnection?.CommandHost == null)
-            {
-                MessageBox.Show("Cannot determine plugin context to open the template file. Please ensure a database connection is registered.",
-                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Plugin command host is not available.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            var pluginDirObj = selectedConnection.CommandHost.Execute(NppDbCommandType.GET_PLUGIN_DIRECTORY, null);
+            var pluginDirObj = _commandHostInstance.Execute(NppDbCommandType.GET_PLUGIN_DIRECTORY, null);
             if (!(pluginDirObj is string pluginDirectoryPath) || string.IsNullOrEmpty(pluginDirectoryPath))
             {
-                MessageBox.Show("Could not retrieve plugin directory path from the command host.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Could not retrieve plugin directory path from the command host.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             var templateFilePath = Path.Combine(pluginDirectoryPath, "AIPromptTemplate.txt");
 
-
             if (!File.Exists(templateFilePath))
             {
                 MessageBox.Show($"AI prompt template file not found at:\n{templateFilePath}\n\nA new empty file will be created if you save.",
-                                "Template Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    "Template Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
 
-            selectedConnection.CommandHost.Execute(NppDbCommandType.OPEN_FILE_IN_NPP, new object[] { templateFilePath });
+            _commandHostInstance.Execute(NppDbCommandType.OPEN_FILE_IN_NPP, new object[] { templateFilePath });
         }
     }
 }
