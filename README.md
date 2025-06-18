@@ -1,7 +1,7 @@
 # NppDB
 This is a repository containing further implementation of NppDB for my bachelors thesis "Further Development of a Plugin that Simplifies SQL Programming in MS Access and PostgreSQL for Source Code Editor Notepad++". 
 NppDB is a Notepad++ plugin originally developed by [Sangkyu Jung](https://github.com/gutkyu/NppDB) for supporting connection to different databases, execute SQL statements and show query results, 
-and further developed by [Priit Post](https://github.com/pripost/NppDB).
+and further developed by [Priit Post](https://github.com/pripost/NppDB) and [Andres Eelma](https://github.com/aneelm/NppDB).
 
 ## GUI Features
 ![structure image](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_All_n.png)
@@ -25,7 +25,7 @@ and further developed by [Priit Post](https://github.com/pripost/NppDB).
    * ANTLR 4.11.1 or 4.13.1 (for development)
 
 ## Installation
-Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/aneelm/NppDB/releases/download/v1.0.19/v1.0.19.zip) package as follows:
+Copy compiled .dll files from project folder or downloaded [.zip package](https://github.com/user-attachments/files/20802757/NppDB.zip) package as follows:
    * Place the file "NppDB.Comm.dll" in the root folder of Notepad++ program folder, where "notepad++.exe" is located.
    * Move the remaining .dll and translation.ini files to the "./plugins/NppDB" folder.
    * If you have get an error when starting up Notepad++ after installing the plugin, make sure all the copied .dll files are unblocked, by right-clicking on them and opening properties, and if possible checking box 'unblock'.
@@ -40,6 +40,8 @@ Copy compiled .dll files from project folder or downloaded [.zip package](https:
    4. Expand the database tree to view database objects as you wish.
    5. Write some SQL statements in the editor.
    6. Execute written SQL statement(s) (F9). You can execute either the selected statement(s) or the statement on which the text cursor is located.
+   7. Analyse your SQL statement for common mistakes (Shift+F9). Remove the messages when you want (Ctrl+Shift+F9).
+   8. When a warning or an error is found, generate and copy an AI prompt to give to a language model of your choosing (Ctrl+F9).
 
 ## Usage
 ### Open Database Connect Manager
@@ -65,7 +67,7 @@ Copy compiled .dll files from project folder or downloaded [.zip package](https:
 
 ### Executing sql statement
    1. Check that current document can execute sql statement. (ok if with sql-result )
-   2. Write a sql statement and then select a block of the statement.
+   2. Write an sql statement and then select a block of the statement.
 	![Select Blocks](https://raw.githubusercontent.com/gutkyu/NppDB/gh-pages/images/NppDB_SQL_Block.png)
    3. In NppDB plugin menu click 'Execute SQL (F9 shortcut key)' or use the F9 shortcut key to run the sql statement and display the results.
 	
