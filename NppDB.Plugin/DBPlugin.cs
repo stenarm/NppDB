@@ -669,38 +669,6 @@ namespace NppDB
                 _lastEditor = null;
             }
         }
-        
-        private void GenerateAiPromptForFirstIssue()
-        {
-            if (_lastAnalysisResult == null || string.IsNullOrEmpty(_lastAnalyzedText) || _lastEditor == null)
-            {
-                MessageBox.Show(@"Please run an analysis first.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.None);
-                return;
-            }
-
-            ParserMessage firstMessage = null;
-            if (_lastAnalysisResult.Errors != null && _lastAnalysisResult.Errors.Any(e => e != null))
-            {
-                firstMessage = _lastAnalysisResult.Errors.First(e => e != null);
-            }
-            else if (_lastAnalysisResult.Commands != null)
-            {
-                firstMessage = _lastAnalysisResult.Commands
-                    .Where(c => c != null)
-                    .SelectMany(c => (c.Warnings ?? Enumerable.Empty<ParserMessage>())
-                        .Concat(c.AnalyzeErrors ?? Enumerable.Empty<ParserMessage>()))
-                    .FirstOrDefault(m => m != null);
-            }
-
-            if (firstMessage != null)
-            {
-                GenerateAiDebugPromptForMessage(firstMessage, _lastAnalyzedText, _lastUsedDialect, _lastEditor);
-            }
-            else
-            {
-                MessageBox.Show(@"No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.None);
-            }
-        }
 
         private static CaretPosition GetCaretPosition()
         {
@@ -1426,19 +1394,87 @@ namespace NppDB
 
             if (analysisInfoAvailable)
             {
-                GenerateAiPromptForFirstIssue();
+                GenerateAiPromptForAllIssues(_lastAnalysisResult, _lastAnalyzedText, _lastUsedDialect, _lastEditor);
+            }
+            else
+            {
+                MessageBox.Show("No active analysis results to generate an AI prompt for. Please run an analysis first.",
+                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
-        private void GenerateAiDebugPromptForMessage(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+        private void GenerateAiPromptForAllIssues(ParserResult analysisResult, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
         {
-            if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null)
+            if (analysisResult == null || string.IsNullOrEmpty(fullQuery) || editor == null)
             {
-                MessageBox.Show("Not enough information to generate AI debug prompt.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Not enough information to generate AI debug prompt (Initial check failed).", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
+            var allMessagesForPrompt = new List<ParserMessage>();
+            if (analysisResult.Errors != null)
+            {
+                allMessagesForPrompt.AddRange(analysisResult.Errors.Where(e => e != null));
+            }
+            if (analysisResult.Commands != null)
+            {
+                allMessagesForPrompt.AddRange(analysisResult.Commands
+                    .Where(c => c != null)
+                    .SelectMany(c => (c.Warnings ?? Enumerable.Empty<ParserMessage>())
+                                      .Concat(c.AnalyzeErrors ?? Enumerable.Empty<ParserMessage>()))
+                    .Where(m => m != null)
+                );
+            }
+
+            if (!allMessagesForPrompt.Any())
+            {
+                MessageBox.Show("No issues found in the last analysis to generate a prompt for.", PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var issuesDetailedListBuilder = new StringBuilder();
+            var issueCounter = 1;
+            foreach (var msg in allMessagesForPrompt.OrderBy(m => m.StartLine).ThenBy(m => m.StartColumn))
+            {
+                var translatedMessage = _warningMessages.TryGetValue(msg.Type, out var translated)
+                                           ? translated
+                                           : msg.Text;
+                if (string.IsNullOrEmpty(translatedMessage))
+                {
+                    translatedMessage = msg.Text ?? "N/A";
+                }
+                var issueType = msg is ParserError ? "Error" : "Warning";
+
+                issuesDetailedListBuilder.AppendLine($"    Issue {issueCounter}:");
+                issuesDetailedListBuilder.AppendLine($"      Type: {issueType}");
+                issuesDetailedListBuilder.AppendLine($"      Message: \"{translatedMessage}\"");
+                issuesDetailedListBuilder.AppendLine($"      Location: Line {msg.StartLine}, Column {msg.StartColumn + 1}");
+
+                var msgLineZeroBased = msg.StartLine - 1;
+                var snippetBuilderForMsg = new StringBuilder();
+                var startSnippetLine = Math.Max(0, msgLineZeroBased - 1);
+                var endSnippetLine = Math.Min(editor.GetLineCount() - 1, msgLineZeroBased + 1);
+
+                for (var i = startSnippetLine; i <= endSnippetLine; i++)
+                {
+                    var lineText = editor.GetLine(i);
+                    snippetBuilderForMsg.AppendLine($"          {i + 1:D3}: {lineText.TrimEnd('\r', '\n')}");
+                }
+                var codeSnippetForMsg = snippetBuilderForMsg.ToString().Trim();
+                if (string.IsNullOrWhiteSpace(codeSnippetForMsg)) codeSnippetForMsg = "        Could not retrieve code snippet.";
+
+                issuesDetailedListBuilder.AppendLine("      Code Context:");
+                issuesDetailedListBuilder.AppendLine(codeSnippetForMsg);
+                if (issueCounter < allMessagesForPrompt.Count)
+                {
+                    issuesDetailedListBuilder.AppendLine("    --------------------");
+                }
+                issueCounter++;
+            }
+            var analysisIssuesWithDetailsListString = issuesDetailedListBuilder.ToString().TrimEnd('\r', '\n');
+
             string generatedPrompt;
+            var dbDialectString = dialect.ToString();
 
             try
             {
@@ -1446,118 +1482,69 @@ namespace NppDB
 
                 if (!File.Exists(templateFilePath))
                 {
-                    MessageBox.Show($"AI prompt template file not found at: {templateFilePath}\nPlease ensure 'AIPromptTemplate.txt' exists in the NppDB plugin directory.",
-                        PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
+                    MessageBox.Show($"AI prompt template file not found: {templateFilePath}\nUsing default prompt structure.",
+                                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    generatedPrompt = GenerateDefaultAiPromptOptionB(dbDialectString, fullQuery, analysisIssuesWithDetailsListString);
                     if (string.IsNullOrEmpty(generatedPrompt)) return;
                 }
                 else
                 {
                     var promptTemplate = File.ReadAllText(templateFilePath);
 
-                    var dbDialectString = dialect.ToString();
-                    var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
-                        ? translated
-                        : targetMessage.Text;
-                    if (string.IsNullOrEmpty(translatedAnalysisMessage))
-                    {
-                        translatedAnalysisMessage = targetMessage.Text ?? "N/A";
-                    }
-
-                    var errorLineZeroBased = targetMessage.StartLine - 1;
-                    var snippetBuilder = new StringBuilder();
-                    var startSnippetLine = Math.Max(0, errorLineZeroBased - 1);
-                    var endSnippetLine = Math.Min(editor.GetLineCount() - 1, errorLineZeroBased + 1);
-
-                    for (var i = startSnippetLine; i <= endSnippetLine; i++)
-                    {
-                        var lineText = editor.GetLine(i);
-                        snippetBuilder.AppendLine($"{i + 1:D3}: {lineText.TrimEnd('\r', '\n')}");
-                    }
-                    var codeSnippet = snippetBuilder.ToString().Trim();
-                    if (string.IsNullOrWhiteSpace(codeSnippet)) codeSnippet = "Could not retrieve code snippet.";
-
                     generatedPrompt = promptTemplate
                         .Replace("{DATABASE_DIALECT}", dbDialectString)
                         .Replace("{SQL_QUERY}", fullQuery.Trim())
-                        .Replace("{ANALYSIS_MESSAGE}", translatedAnalysisMessage)
-                        .Replace("{LINE_NUMBER}", targetMessage.StartLine.ToString())
-                        .Replace("{COLUMN_NUMBER}", (targetMessage.StartColumn + 1).ToString())
-                        .Replace("{CODE_SNIPPET}", codeSnippet);
+                        .Replace("{ANALYSIS_ISSUES_WITH_DETAILS_LIST}", analysisIssuesWithDetailsListString);
                 }
             }
             catch (Exception exReadTemplate)
             {
-                MessageBox.Show($"Error reading or processing AI prompt template: {exReadTemplate.Message}\nFalling back to default prompt.",
-                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                generatedPrompt = GenerateDefaultAiPrompt(targetMessage, fullQuery, dialect, editor);
+                MessageBox.Show($"Error reading or processing AI prompt template: {exReadTemplate.Message}\nFalling back to default prompt structure.",
+                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                generatedPrompt = GenerateDefaultAiPromptOptionB(dbDialectString, fullQuery, analysisIssuesWithDetailsListString);
                 if (string.IsNullOrEmpty(generatedPrompt)) return;
             }
-
 
             try
             {
                 Clipboard.SetText(generatedPrompt);
-
                 var dialogMessage = "AI debug prompt copied to clipboard!\n\n" +
                                     "--- Prompt Content: ---\n" +
                                     generatedPrompt;
-
-                MessageBox.Show(dialogMessage,
-                    PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK,
-                    MessageBoxIcon.None);
+                MessageBox.Show(dialogMessage, PLUGIN_NAME + " - AI Prompt Generated", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception exClipboard)
             {
                 MessageBox.Show($"Error copying prompt to clipboard or displaying prompt: {exClipboard.Message}",
-                    PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                PLUGIN_NAME, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private string GenerateDefaultAiPrompt(ParserMessage targetMessage, string fullQuery, SqlDialect dialect, IScintillaGateway editor)
+        private static string GenerateDefaultAiPromptOptionB(string dbDialectString, string fullQuery, string analysisIssuesWithDetailsList)
         {
-            if (targetMessage == null || string.IsNullOrEmpty(fullQuery) || editor == null) return null;
-
-            var dbDialectString = dialect.ToString();
-            var translatedAnalysisMessage = _warningMessages.TryGetValue(targetMessage.Type, out var translated)
-                ? translated
-                : targetMessage.Text;
-            if (string.IsNullOrEmpty(translatedAnalysisMessage))
+            if (string.IsNullOrEmpty(dbDialectString) || string.IsNullOrEmpty(fullQuery) || string.IsNullOrEmpty(analysisIssuesWithDetailsList))
             {
-                translatedAnalysisMessage = targetMessage.Text ?? "N/A";
+                Console.WriteLine("GenerateDefaultAiPromptOptionB: Missing essential information to build default prompt.");
+                return null;
             }
-
-            var errorLineZeroBased = targetMessage.StartLine - 1;
-            var snippetBuilder = new StringBuilder();
-            var startSnippetLine = Math.Max(0, errorLineZeroBased - 1);
-            var endSnippetLine = Math.Min(editor.GetLineCount() - 1, errorLineZeroBased + 1);
-
-            for (var i = startSnippetLine; i <= endSnippetLine; i++)
-            {
-                var lineText = editor.GetLine(i);
-                snippetBuilder.AppendLine($"{i + 1:D3}: {lineText.TrimEnd('\r', '\n')}");
-            }
-            var codeSnippet = snippetBuilder.ToString().Trim();
-            if (string.IsNullOrWhiteSpace(codeSnippet)) codeSnippet = "Could not retrieve code snippet.";
 
             var promptBuilder = new StringBuilder();
             promptBuilder.AppendLine($"You are an expert {dbDialectString} SQL developer and troubleshooter.");
-            promptBuilder.AppendLine("I need help understanding and fixing an issue with my SQL query.");
+            promptBuilder.AppendLine("I need help understanding and fixing issues with my SQL query.");
             promptBuilder.AppendLine();
             promptBuilder.AppendLine("Here is the information:");
             promptBuilder.AppendLine($"1.  Database Dialect: {dbDialectString}");
             promptBuilder.AppendLine("2.  SQL Query:");
             promptBuilder.AppendLine(fullQuery.Trim());
-            promptBuilder.AppendLine($"3.  Analysis Feedback (Warning/Error): \"{translatedAnalysisMessage}\"");
-            promptBuilder.AppendLine($"4.  Location of Issue: Line {targetMessage.StartLine}, Column {targetMessage.StartColumn + 1}.");
-            promptBuilder.AppendLine("    (The issue is around this part of the code:)");
-            promptBuilder.AppendLine(codeSnippet);
+            promptBuilder.AppendLine("3.  Detected Issues (Errors/Warnings):");
+            promptBuilder.AppendLine(analysisIssuesWithDetailsList);
             promptBuilder.AppendLine();
-            promptBuilder.AppendLine("Please, using a clear, numbered step-by-step thought process:");
-            promptBuilder.AppendLine($"a. Explain what this feedback message means in the context of my query and the {dbDialectString} dialect.");
+            promptBuilder.AppendLine("Please, for each issue detailed in point 3 above:");
+            promptBuilder.AppendLine($"a. Explain what the feedback message means in the context of my query and the {dbDialectString} dialect.");
             promptBuilder.AppendLine("b. Identify the most likely cause(s) of this issue in my query.");
-            promptBuilder.AppendLine("c. Provide specific, corrected SQL code snippet(s) to resolve the issue.");
+            promptBuilder.AppendLine("c. Provide specific, corrected SQL code snippet(s) to resolve the issue, or indicate how the query structure should change for that specific issue.");
             promptBuilder.AppendLine("d. If applicable, suggest any SQL best practices related to this problem to avoid it in the future.");
+
             return promptBuilder.ToString();
         }
     }
